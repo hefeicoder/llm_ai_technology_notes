@@ -3,62 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Startup Landscape by Layer</title>
+  <title>Private AI Startup Landscape by Layer</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f1117;
-      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f5f8;
+      color: #172033;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 32px;
+      padding: 30px;
     }
 
     .slide {
-      width: 1200px;
+      width: 1080px;
       max-width: 100%;
+      background: #fff;
+      border: 1px solid #e6e9ef;
+      border-radius: 22px;
+      box-shadow: 0 18px 50px rgba(31, 41, 55, 0.12);
+      padding: 34px 36px 30px;
     }
 
     h1 {
       text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 6px;
-      color: #fff;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 0;
+      margin-bottom: 8px;
+      color: #111827;
     }
 
     .subtitle {
       text-align: center;
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 32px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #5e6878;
+      margin-bottom: 20px;
+    }
+
+    .note-strip {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 auto 18px;
+      color: #4a5568;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .note-strip span {
+      border: 1px solid #ffd0d8;
+      background: #fff3f5;
+      border-radius: 999px;
+      padding: 6px 12px;
     }
 
     .stack {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 9px;
     }
 
     .layer {
-      border-radius: 14px;
-      padding: 18px 22px;
+      border-radius: 12px;
+      padding: 15px 16px;
       display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 16px;
+      grid-template-columns: 196px 1fr;
+      gap: 14px;
       align-items: center;
+      box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.035);
     }
 
-    /* Layer colors */
-    .layer-1 { background: linear-gradient(135deg, #1a0a2e, #2d1060); border: 1px solid #6d28d9; }
-    .layer-2 { background: linear-gradient(135deg, #0a1a2e, #0f3060); border: 1px solid #2563eb; }
-    .layer-3 { background: linear-gradient(135deg, #0a2018, #0f4030); border: 1px solid #059669; }
-    .layer-4 { background: linear-gradient(135deg, #1a150a, #3a2810); border: 1px solid #d97706; }
+    .layer-1 { background: #f0fbf5; border: 1px solid #bdebd1; border-left: 8px solid #12a861; }
+    .layer-2 { background: #f0f7ff; border: 1px solid #c5dcfb; border-left: 8px solid #2d7bd8; }
+    .layer-3 { background: #f7f3ff; border: 1px solid #d8c8ff; border-left: 8px solid #7a58d6; }
+    .layer-4 { background: #fff7e8; border: 1px solid #f2d59b; border-left: 8px solid #d78a12; }
+    .layer-5 { background: #f6f7f9; border: 1px solid #d8dde6; border-left: 8px solid #5f6978; }
 
     .layer-label {
       display: flex;
@@ -68,21 +93,22 @@
 
     .layer-num {
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      opacity: 0.6;
+      color: #ff2442;
     }
 
     .layer-name {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
+      font-size: 18.5px;
+      font-weight: 800;
+      line-height: 1.18;
+      color: #121826;
     }
 
     .layer-desc {
-      font-size: 11px;
-      opacity: 0.55;
+      font-size: 11.5px;
+      color: #667085;
       margin-top: 2px;
       line-height: 1.4;
     }
@@ -90,48 +116,67 @@
     .companies {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 7px 8px;
     }
 
     .company-card {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 10px;
-      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #dfe5ee;
+      border-radius: 8px;
+      padding: 7px 9px;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      min-width: 110px;
+      gap: 3px;
+      min-width: 108px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
     }
 
     .company-name {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12.8px;
+      font-weight: 750;
+      color: #182033;
       white-space: nowrap;
     }
 
     .company-val {
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .company-tag {
-      font-size: 10px;
-      opacity: 0.5;
+      font-size: 11.5px;
+      font-weight: 800;
       white-space: nowrap;
     }
 
-    /* valuation color tiers */
-    .val-mega  { color: #f59e0b; }
-    .val-large { color: #34d399; }
-    .val-mid   { color: #60a5fa; }
-    .val-small { color: #a78bfa; }
+    .company-tag {
+      font-size: 9.8px;
+      color: #697386;
+      white-space: nowrap;
+    }
+
+    .val-mega  { color: #c2410c; }
+    .val-large { color: #047857; }
+    .val-mid   { color: #1d4ed8; }
+    .val-small { color: #6d28d9; }
+    .val-flag  { color: #be123c; }
+    .val-none  { color: #4b5563; }
+
+    .layer-signal {
+      font-size: 10.5px;
+      color: #6b7280;
+      text-align: right;
+      margin-top: 6px;
+    }
+
+    .arrow {
+      text-align: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #97a0af;
+      margin: -2px 0;
+    }
 
     .legend {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      margin-top: 20px;
+      gap: 16px;
+      margin-top: 16px;
       flex-wrap: wrap;
     }
 
@@ -140,7 +185,8 @@
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      color: #9ca3af;
+      font-weight: 650;
+      color: #596579;
     }
 
     .legend-dot {
@@ -149,154 +195,80 @@
       border-radius: 50%;
     }
 
-    .arrow {
+    .footnote {
+      margin-top: 10px;
       text-align: center;
-      font-size: 11px;
-      color: #4b5563;
-      margin: -4px 0;
+      font-size: 10.5px;
+      line-height: 1.45;
+      color: #7a8495;
     }
 
-    .total-val {
-      font-size: 10px;
-      color: #6b7280;
-      text-align: right;
-      margin-top: 4px;
+    @media (max-width: 760px) {
+      body { padding: 14px; align-items: flex-start; }
+      .slide { padding: 24px 18px; border-radius: 16px; }
+      h1 { font-size: 26px; }
+      .subtitle { font-size: 12px; }
+      .layer { grid-template-columns: 1fr; gap: 10px; }
+      .layer-signal { text-align: left; }
+      .company-card { min-width: 112px; }
     }
   </style>
 </head>
 <body>
   <div class="slide">
-    <h1>AI Startup Landscape by Stack Layer</h1>
-    <p class="subtitle">Emerging companies nearing IPO scale &nbsp;·&nbsp; Valuations as of early 2026</p>
+    <h1>Private AI Startup Landscape by Supercycle Layer</h1>
+    <p class="subtitle">Pre-IPO / private companies only &nbsp;·&nbsp; latest reported valuation signals through July 4, 2026</p>
+
+    <div class="note-strip">
+      <span>Public incumbents and hyperscalers excluded</span>
+      <span>Developer tools roll into Apps &amp; Agents</span>
+      <span>Power + Semis added from the supercycle stack</span>
+    </div>
 
     <div class="stack">
 
-      <!-- Layer 1 -->
       <div class="layer layer-1">
         <div class="layer-label">
           <span class="layer-num">Layer 1</span>
-          <span class="layer-name">Foundation Models</span>
-          <span class="layer-desc">Core LLMs &amp; multimodal<br/>models everything runs on</span>
+          <span class="layer-name">Applications &amp; Agents</span>
+          <span class="layer-desc">AI-native products, coding agents,<br/>vertical workflows and copilots</span>
         </div>
         <div>
           <div class="companies">
             <div class="company-card">
-              <span class="company-name">OpenAI</span>
-              <span class="company-val val-mega">$840B</span>
-              <span class="company-tag">GPT series</span>
+              <span class="company-name">Figure AI</span>
+              <span class="company-val val-large">$39B</span>
+              <span class="company-tag">Humanoid robotics</span>
             </div>
             <div class="company-card">
-              <span class="company-name">Anthropic</span>
-              <span class="company-val val-mega">$380B</span>
-              <span class="company-tag">Claude series</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">xAI</span>
-              <span class="company-val val-mega">$230B+</span>
-              <span class="company-tag">Grok series</span>
-            </div>
-          </div>
-          <div class="total-val">Combined: ~$1.45T</div>
-        </div>
-      </div>
-
-      <div class="arrow">&#9660; Powers</div>
-
-      <!-- Layer 2 -->
-      <div class="layer layer-2">
-        <div class="layer-label">
-          <span class="layer-num">Layer 2</span>
-          <span class="layer-name">AI Infrastructure</span>
-          <span class="layer-desc">Compute, data pipelines,<br/>inference &amp; labeling</span>
-        </div>
-        <div>
-          <div class="companies">
-            <div class="company-card">
-              <span class="company-name">Databricks</span>
-              <span class="company-val val-mega">$134B</span>
-              <span class="company-tag">Data + ML platform</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Fireworks AI</span>
-              <span class="company-val val-mid">$4B</span>
-              <span class="company-tag">Inference platform</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Dataiku</span>
-              <span class="company-val val-mid">$3.7B</span>
-              <span class="company-tag">Enterprise data science</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Surge AI</span>
-              <span class="company-val val-large">$20B+</span>
-              <span class="company-tag">Data labeling / RLHF</span>
-            </div>
-          </div>
-          <div class="total-val">Combined: ~$162B</div>
-        </div>
-      </div>
-
-      <div class="arrow">&#9660; Enables</div>
-
-      <!-- Layer 3 -->
-      <div class="layer layer-3">
-        <div class="layer-label">
-          <span class="layer-num">Layer 3</span>
-          <span class="layer-name">Developer Tools</span>
-          <span class="layer-desc">AI-native IDEs, coding agents<br/>&amp; app-building platforms</span>
-        </div>
-        <div>
-          <div class="companies">
-            <div class="company-card">
-              <span class="company-name">Cursor</span>
+              <span class="company-name">Anysphere</span>
               <span class="company-val val-large">$29.3B</span>
-              <span class="company-tag">AI code editor</span>
+              <span class="company-tag">Cursor / coding</span>
             </div>
             <div class="company-card">
               <span class="company-name">Cognition</span>
-              <span class="company-val val-large">$9.8B</span>
-              <span class="company-tag">Autonomous SWE agent</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Lovable</span>
-              <span class="company-val val-mid">$6.6B</span>
-              <span class="company-tag">Vibe coding / app gen</span>
-            </div>
-          </div>
-          <div class="total-val">Combined: ~$45.7B</div>
-        </div>
-      </div>
-
-      <div class="arrow">&#9660; Delivered to</div>
-
-      <!-- Layer 4 -->
-      <div class="layer layer-4">
-        <div class="layer-label">
-          <span class="layer-num">Layer 4</span>
-          <span class="layer-name">AI Applications</span>
-          <span class="layer-desc">Vertical SaaS solving<br/>specific domain problems</span>
-        </div>
-        <div>
-          <div class="companies">
-            <div class="company-card">
-              <span class="company-name">Canva</span>
-              <span class="company-val val-mega">$42B</span>
-              <span class="company-tag">Creative tools</span>
+              <span class="company-val val-large">$26B</span>
+              <span class="company-tag">Devin / agents</span>
             </div>
             <div class="company-card">
               <span class="company-name">Perplexity</span>
-              <span class="company-val val-large">$20B</span>
+              <span class="company-val val-large">$21.2B</span>
               <span class="company-tag">AI search</span>
             </div>
             <div class="company-card">
-              <span class="company-name">Sierra</span>
-              <span class="company-val val-large">$10B</span>
-              <span class="company-tag">Sales / CX AI</span>
+              <span class="company-name">Skild AI</span>
+              <span class="company-val val-large">$14B+</span>
+              <span class="company-tag">Robotics brain</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">OpenEvidence</span>
+              <span class="company-val val-large">$12B</span>
+              <span class="company-tag">Medical AI</span>
             </div>
             <div class="company-card">
               <span class="company-name">ElevenLabs</span>
               <span class="company-val val-large">$11B</span>
-              <span class="company-tag">AI voice</span>
+              <span class="company-tag">Voice / audio</span>
             </div>
             <div class="company-card">
               <span class="company-name">Harvey</span>
@@ -304,60 +276,260 @@
               <span class="company-tag">Legal AI</span>
             </div>
             <div class="company-card">
+              <span class="company-name">Sierra</span>
+              <span class="company-val val-large">$10B</span>
+              <span class="company-tag">CX agents</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Replit</span>
+              <span class="company-val val-mid">$9B</span>
+              <span class="company-tag">App generation</span>
+            </div>
+            <div class="company-card">
               <span class="company-name">Glean</span>
               <span class="company-val val-mid">$7.2B</span>
               <span class="company-tag">Enterprise search</span>
             </div>
             <div class="company-card">
-              <span class="company-name">Gong</span>
-              <span class="company-val val-mid">$7.25B</span>
-              <span class="company-tag">Revenue intelligence</span>
+              <span class="company-name">Lovable</span>
+              <span class="company-val val-mid">$6.6B</span>
+              <span class="company-tag">Vibe coding</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Abridge</span>
+              <span class="company-val val-mid">$5.3B</span>
+              <span class="company-tag">Clinical notes</span>
             </div>
             <div class="company-card">
               <span class="company-name">Synthesia</span>
               <span class="company-val val-mid">$4B</span>
               <span class="company-tag">AI video</span>
             </div>
-            <div class="company-card">
-              <span class="company-name">Suno</span>
-              <span class="company-val val-mid">$2.45B</span>
-              <span class="company-tag">AI music</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Clay</span>
-              <span class="company-val val-small">$1.25B</span>
-              <span class="company-tag">AI sales prospecting</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">HeyGen</span>
-              <span class="company-val val-small">$500M</span>
-              <span class="company-tag">AI avatar video</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Gamma</span>
-              <span class="company-val val-small">~$400M</span>
-              <span class="company-tag">AI presentations</span>
-            </div>
-            <div class="company-card">
-              <span class="company-name">Elise AI</span>
-              <span class="company-val val-mid">$2.2B</span>
-              <span class="company-tag">Real estate / health AI</span>
-            </div>
           </div>
-          <div class="total-val">Combined: ~$118.6B</div>
+          <div class="layer-signal">Most visible independent app value today is coding, search, robotics, healthcare, voice, legal and CX automation.</div>
         </div>
       </div>
 
-    </div><!-- end stack -->
+      <div class="arrow">&#9660; Built on</div>
 
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> $100B+ (Mega)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> $10B–$100B (Large)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div> $1B–$10B (Mid)</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> &lt;$1B (Small)</div>
-      <div class="legend-item" style="margin-left:16px; color:#6b7280">* Valuations approximate, early 2026</div>
+      <div class="layer layer-2">
+        <div class="layer-label">
+          <span class="layer-num">Layer 2</span>
+          <span class="layer-name">Foundation Models</span>
+          <span class="layer-desc">Frontier labs and model builders,<br/>often vertically integrating into apps</span>
+        </div>
+        <div>
+          <div class="companies">
+            <div class="company-card">
+              <span class="company-name">Anthropic</span>
+              <span class="company-val val-mega">$965B</span>
+              <span class="company-tag">Claude / coding</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">OpenAI</span>
+              <span class="company-val val-mega">$852B</span>
+              <span class="company-tag">GPT / ChatGPT</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">DeepSeek</span>
+              <span class="company-val val-large">$50B+*</span>
+              <span class="company-tag">DeepSeek V4</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">SSI</span>
+              <span class="company-val val-large">$30B</span>
+              <span class="company-tag">Research lab</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Mistral AI</span>
+              <span class="company-val val-large">~$14B</span>
+              <span class="company-tag">Open-weight LLMs</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Thinking Machines</span>
+              <span class="company-val val-large">$12B</span>
+              <span class="company-tag">New model lab</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Moonshot AI</span>
+              <span class="company-val val-large">$10B*</span>
+              <span class="company-tag">Kimi K2.6</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Cohere</span>
+              <span class="company-val val-mid">~$7B</span>
+              <span class="company-tag">Enterprise LLMs</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Recursive SI</span>
+              <span class="company-val val-mid">$4B*</span>
+              <span class="company-tag">Self-improving AI</span>
+            </div>
+          </div>
+          <div class="layer-signal">Model labs are also app companies; Claude Code and ChatGPT are the clearest examples.</div>
+        </div>
+      </div>
+
+      <div class="arrow">&#9660; Served through</div>
+
+      <div class="layer layer-3">
+        <div class="layer-label">
+          <span class="layer-num">Layer 3</span>
+          <span class="layer-name">AI Infrastructure &amp; Data</span>
+          <span class="layer-desc">Data platforms, inference clouds,<br/>storage, RLHF and model operations</span>
+        </div>
+        <div>
+          <div class="companies">
+            <div class="company-card">
+              <span class="company-name">Databricks</span>
+              <span class="company-val val-mega">$175B*</span>
+              <span class="company-tag">Private-market target</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">VAST Data</span>
+              <span class="company-val val-large">$30B</span>
+              <span class="company-tag">AI data OS</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Surge AI</span>
+              <span class="company-val val-large">$15-25B</span>
+              <span class="company-tag">RLHF / labeling</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Fireworks AI</span>
+              <span class="company-val val-large">$15B*</span>
+              <span class="company-tag">Funding target</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Baseten</span>
+              <span class="company-val val-large">$11-13B</span>
+              <span class="company-tag">Inference infra</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Mercor</span>
+              <span class="company-val val-large">$10B</span>
+              <span class="company-tag">Expert data / evals</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Together AI</span>
+              <span class="company-val val-mid">$8.3B</span>
+              <span class="company-tag">Series C closed</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Dataiku</span>
+              <span class="company-val val-mid">$3.7B</span>
+              <span class="company-tag">Enterprise AI</span>
+            </div>
+          </div>
+          <div class="layer-signal">Most competitive layer: inference clouds, model routing, data gravity and human feedback loops.</div>
+        </div>
+      </div>
+
+      <div class="arrow">&#9660; Requires</div>
+
+      <div class="layer layer-4">
+        <div class="layer-label">
+          <span class="layer-num">Layer 4</span>
+          <span class="layer-name">Power &amp; Data Centers</span>
+          <span class="layer-desc">GPU clouds, AI factories,<br/>energy-backed compute capacity</span>
+        </div>
+        <div>
+          <div class="companies">
+            <div class="company-card">
+              <span class="company-name">Nscale</span>
+              <span class="company-val val-large">$14.6B</span>
+              <span class="company-tag">AI data centers</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Crusoe</span>
+              <span class="company-val val-large">$10B+</span>
+              <span class="company-tag">AI factories</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Lambda</span>
+              <span class="company-val val-none">Undisc.</span>
+              <span class="company-tag">$1.5B+ raise</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Fluidstack</span>
+              <span class="company-val val-none">Undisc.</span>
+              <span class="company-tag">GPU cloud</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Starcloud</span>
+              <span class="company-val val-none">Undisc.</span>
+              <span class="company-tag">Orbital compute</span>
+            </div>
+          </div>
+          <div class="layer-signal">Private value is moving toward firms that can secure power, sites, GPUs and long-duration customers.</div>
+        </div>
+      </div>
+
+      <div class="arrow">&#9660; Constrained by</div>
+
+      <div class="layer layer-5">
+        <div class="layer-label">
+          <span class="layer-num">Layer 5</span>
+          <span class="layer-name">Semis &amp; Accelerators</span>
+          <span class="layer-desc">Private chip, interconnect,<br/>inference and memory challengers</span>
+        </div>
+        <div>
+          <div class="companies">
+            <div class="company-card">
+              <span class="company-name">Cerebras</span>
+              <span class="company-val val-large">$26.6B*</span>
+              <span class="company-tag">IPO target</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Groq</span>
+              <span class="company-val val-large">$20B*</span>
+              <span class="company-tag">Nvidia license</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Tenstorrent</span>
+              <span class="company-val val-mid">$8-10B*</span>
+              <span class="company-tag">Deal talks</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">SambaNova</span>
+              <span class="company-val val-mid">$1.6B*</span>
+              <span class="company-tag">Intel talks</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Etched</span>
+              <span class="company-val val-none">$800M raise</span>
+              <span class="company-tag">Transformer ASIC</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">Enfabrica</span>
+              <span class="company-val val-none">$900M*</span>
+              <span class="company-tag">Nvidia license</span>
+            </div>
+            <div class="company-card">
+              <span class="company-name">OXMIQ</span>
+              <span class="company-val val-small">$35M raise</span>
+              <span class="company-tag">Licensable GPU IP</span>
+            </div>
+          </div>
+          <div class="layer-signal">The lower stack is where scarcity sits; many numbers are strategic deal values, not clean post-money marks.</div>
+        </div>
+      </div>
+
     </div>
 
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#f4b94a"></div> $100B+ private valuation</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#42d18d"></div> $10B-$100B</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#66b0ff"></div> $1B-$10B</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#b7a0ff"></div> &lt;$1B or early</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c4cad4"></div> Undisclosed / raise size only</div>
+    </div>
+
+    <div class="footnote">
+      * Marks reported transaction value, acquisition option, IPO target, or deal-talk range rather than a clean primary funding valuation.
+      xAI / SpaceXAI is omitted because it is no longer a standalone private startup in the latest reported structure.
+      GLM parent Z.ai / Zhipu is omitted from cards because it IPO'd in Hong Kong in Jan. 2026.
+    </div>
   </div>
 </body>
 </html>
