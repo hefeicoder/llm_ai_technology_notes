@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Economics of the AI Supercycle</title>
+
+  <!-- KaTeX for math -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true}], throwOnError:false});"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      line-height: 1.65;
+      padding: 40px 20px 80px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #111;
+    }
+    .page-subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 32px;
+    }
+
+    .container { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Sidebar bookmark layout ── */
+    .layout { display: flex; align-items: flex-start; max-width: 1180px; margin: 0 auto; gap: 28px; }
+    .sidebar {
+      flex: 0 0 248px;
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+      padding: 18px;
+    }
+    .sidebar-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: #888; font-weight: 700; margin-bottom: 14px; }
+    .sidebar nav ol { list-style: none; padding: 0; margin: 0; }
+    .sidebar nav > ol > li { margin-bottom: 4px; }
+    .sidebar nav > ol > li > a {
+      display: block; font-weight: 700; color: #1a1a1a; text-decoration: none;
+      padding: 5px 0; line-height: 1.35; font-size: 0.85rem;
+    }
+    .sidebar nav > ol > li > a:hover { color: #1d7a45; }
+    .sidebar nav > ol > li > a.active { color: #1d7a45; }
+    .sidebar nav ul { list-style: none; padding: 2px 0 6px; margin: 0; }
+    .sidebar nav ul li a {
+      display: block; padding: 3px 0 3px 12px; color: #777; text-decoration: none;
+      font-size: 0.79rem; line-height: 1.4; border-left: 2px solid #eee;
+    }
+    .sidebar nav ul li a:hover { color: #1a1a1a; border-left-color: #bbb; }
+    .sidebar nav ul li a.active { color: #1d7a45; border-left-color: #1d7a45; font-weight: 600; }
+    html { scroll-behavior: smooth; }
+    .chapter, .chapter-body h2[id] { scroll-margin-top: 18px; }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; gap: 0; }
+      .sidebar { position: static; flex: none; width: 100%; max-height: none; margin-bottom: 20px; }
+    }
+
+    /* ── Chapter card ── */
+    .chapter { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06); overflow: hidden; }
+    .chapter-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; cursor: pointer; user-select: none; }
+    .chapter-header-left { display: flex; align-items: center; gap: 16px; }
+    .chapter-num {
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; background: #1a1a1a; color: #fff;
+      font-weight: 700; font-size: 1rem; border-radius: 8px; flex-shrink: 0;
+    }
+    .chapter-title-group { display: flex; flex-direction: column; gap: 2px; }
+    .chapter-title { font-size: 1.05rem; font-weight: 700; color: #111; }
+    .chapter-label { font-size: 0.68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #888; }
+    .chevron { font-size: 1rem; color: #888; transition: transform .25s ease; }
+    .chapter.collapsed .chevron { transform: rotate(180deg); }
+
+    /* ── Chapter body ── */
+    .chapter-body { padding: 4px 24px 28px; border-top: 1px solid #f0f0f0; }
+    .chapter.collapsed .chapter-body { display: none; }
+    .chapter-body p { font-size: 0.97rem; color: #333; margin-bottom: 16px; }
+    .chapter-body h2 { font-size: 1.05rem; font-weight: 700; margin: 28px 0 12px; color: #111; }
+    .chapter-body h3 { font-size: 1rem; font-weight: 700; margin: 22px 0 10px; color: #111; }
+    .chapter-body ul { padding-left: 22px; margin-bottom: 16px; }
+    .chapter-body ul li { font-size: 0.97rem; color: #333; margin-bottom: 10px; }
+    .chapter-body ol { padding-left: 26px; margin-bottom: 16px; }
+    .chapter-body ol li { font-size: 0.97rem; color: #333; margin-bottom: 12px; }
+
+    /* ── Inline code badge ── */
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.82em; background: #f0f0f0; border: 1px solid #ddd; border-radius: 5px;
+      padding: 1px 7px; color: #333; white-space: nowrap;
+    }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin: 16px 0 20px; border-radius: 8px; border: 1px solid #e0e0e0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    thead tr { background: #1a1a1a; color: #fff; }
+    thead th { padding: 13px 16px; text-align: left; font-weight: 600; font-size: 0.88rem; }
+    tbody tr { border-top: 1px solid #e8e8e8; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody td { padding: 12px 16px; color: #333; vertical-align: top; }
+
+    /* ── Collapsible sub-section ── */
+    .sub-collapse { border: 1px solid #e8e8e8; border-radius: 10px; overflow: hidden; margin-top: 20px; }
+    .sub-collapse-header {
+      display: flex; align-items: center; justify-content: space-between; padding: 14px 18px;
+      cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #222; background: #fff; user-select: none;
+    }
+    .sub-collapse-header .chevron-orange { color: #e07a20; font-size: 1rem; transition: transform .25s; }
+    .sub-collapse.open .chevron-orange { transform: rotate(180deg); }
+    .sub-collapse-body { display: none; padding: 14px 18px 18px; border-top: 1px solid #f0f0f0; font-size: 0.92rem; color: #444; }
+    .sub-collapse.open .sub-collapse-body { display: block; }
+    .sub-collapse-body ul { padding-left: 20px; }
+    .sub-collapse-body ul li { margin-bottom: 8px; }
+    .sub-collapse-body p { font-size: 0.92rem; margin-bottom: 12px; }
+
+    /* ── Chapter footer ── */
+    .chapter-footer { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 16px 24px 24px; }
+    .btn-collapse { background: none; border: none; cursor: pointer; font-size: 0.88rem; color: #555; display: flex; align-items: center; gap: 5px; font-weight: 500; }
+    .btn-next {
+      background: #1a1a1a; color: #fff; border: none; border-radius: 999px; padding: 10px 22px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s;
+    }
+    .btn-next:hover { background: #333; }
+
+    /* ── TIP callout ── */
+    .tip-box { background: #f0faf4; border-left: 3px solid #34c76f; border-radius: 8px; padding: 16px 18px; margin: 18px 0; }
+    .tip-label { font-size: 0.75rem; font-weight: 700; letter-spacing: .08em; color: #22a05a; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-style: italic; }
+    .tip-box p { font-size: 0.92rem; font-style: italic; color: #2d4a38; margin: 0 !important; }
+    .tip-box p + p { margin-top: 10px !important; }
+
+    /* ── WARNING / DEBATE callout ── */
+    .warn-box { background: #fff8f0; border-left: 3px solid #e8a33d; border-radius: 8px; padding: 16px 18px; margin: 18px 0; }
+    .warn-label { font-size: 0.75rem; font-weight: 700; letter-spacing: .08em; color: #c87f1e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-style: italic; }
+    .warn-box p { font-size: 0.92rem; color: #5c4626; margin: 0 !important; }
+    .warn-box p + p { margin-top: 10px !important; }
+
+    /* ── Quote box ── */
+    .quote-box { border-left: 3px solid #c9c9c9; background: #fafafa; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 18px 0; }
+    .quote-box p { font-size: 0.97rem; font-style: italic; color: #2a2a2a; margin: 0 0 6px !important; }
+    .quote-attr { font-size: 0.8rem; color: #888; font-weight: 600; font-style: normal; }
+
+    /* ── Stat grid ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 20px; }
+    .stat-card { background: #fafafa; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; }
+    .stat-num { font-size: 1.5rem; font-weight: 800; color: #1d7a45; line-height: 1.1; }
+    .stat-label { font-size: 0.74rem; color: #777; margin-top: 6px; line-height: 1.35; }
+
+    /* ── Layer-cake / triangle visual ── */
+    .cake { margin: 20px 0; display: flex; flex-direction: column; gap: 6px; }
+    .cake-row {
+      display: flex; align-items: center; gap: 12px; border-radius: 8px; padding: 12px 16px;
+      color: #fff; font-size: 0.9rem;
+    }
+    .cake-row .cake-name { font-weight: 700; min-width: 92px; }
+    .cake-row .cake-desc { font-size: 0.84rem; opacity: 0.92; }
+    .cake-apps  { background: #2b8a5b; }
+    .cake-model { background: #3a7bd5; }
+    .cake-infra { background: #6c5ce7; }
+    .cake-power { background: #d98324; }
+    .cake-semis { background: #1a1a1a; }
+    .cake-caption { text-align: center; font-size: 0.86rem; color: #555; font-style: italic; margin-top: 12px; }
+
+    /* ── Cost bar (electrons-to-tokens) ── */
+    .costbar-wrap { margin: 16px 0 8px; }
+    .costbar { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 0.86rem; }
+    .costbar-label { min-width: 168px; color: #333; }
+    .costbar-track { flex: 1; background: #f0f0f0; border-radius: 5px; overflow: hidden; height: 22px; }
+    .costbar-fill { height: 100%; background: #3a7bd5; border-radius: 5px; }
+    .costbar-val { min-width: 96px; text-align: right; font-weight: 600; color: #222; font-variant-numeric: tabular-nums; }
+
+    /* ── Horizontal bar chart ── */
+    .chart-title { font-size: 0.82rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .05em; margin: 20px 0 2px; }
+    .chart-src { font-size: 0.74rem; color: #aaa; font-style: italic; margin: 2px 0 12px; }
+    .hbar-chart { margin: 12px 0 8px; }
+    .hbar-row { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 0.85rem; }
+    .hbar-label { min-width: 150px; color: #333; }
+    .hbar-track { flex: 1; background: #f0f0f0; border-radius: 5px; overflow: hidden; height: 24px; }
+    .hbar-fill { height: 100%; border-radius: 5px; min-width: 2px; }
+    .hbar-val { min-width: 104px; text-align: right; font-weight: 600; color: #222; font-variant-numeric: tabular-nums; }
+    .hbar-semis { background: #1a1a1a; } .hbar-infra { background: #6c5ce7; } .hbar-apps { background: #2b8a5b; }
+    .hbar-blue { background: #3a7bd5; } .hbar-amber { background: #d98324; } .hbar-grey { background: #9aa0a6; }
+    .hbar-row.dim .hbar-fill { opacity: .55; }
+
+    /* ── Stacked share bar ── */
+    .share-bar { display: flex; height: 36px; border-radius: 8px; overflow: hidden; margin: 14px 0 8px; font-size: 0.78rem; font-weight: 700; color: #fff; }
+    .share-seg { display: flex; align-items: center; justify-content: center; min-width: 0; }
+    .share-legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.8rem; color: #555; margin-bottom: 14px; }
+    .share-legend span { display: flex; align-items: center; gap: 6px; }
+    .share-dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+
+    /* ── Value-accrual funnel (the inverted-triangle chart) ── */
+    .accrue { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; margin: 16px 0 6px; }
+    .accrue-col { flex: 1; min-width: 280px; }
+    .accrue-head { text-align: center; font-weight: 700; font-size: 0.92rem; color: #111; margin-bottom: 14px; }
+    .accrue-head span { font-weight: 500; color: #888; font-size: 0.8rem; }
+    .funnel { display: flex; flex-direction: column; gap: 7px; }
+    .funnel-row { display: flex; align-items: center; gap: 10px; }
+    .funnel-layer { width: 48px; font-size: 0.76rem; color: #666; text-align: right; flex-shrink: 0; }
+    .funnel-track { flex: 1; display: flex; justify-content: center; }
+    .funnel-bar {
+      height: 44px; display: flex; align-items: center; justify-content: center;
+      color: #0b3a56; font-weight: 700; font-size: 0.84rem; border-radius: 6px;
+      background: #8ec9ef; min-width: 44px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    }
+    .funnel-cloud .funnel-bar { background: #b9d9c9; color: #14402c; }
+    .accrue-note { text-align: center; font-size: 0.8rem; color: #555; margin-top: 12px; }
+    .accrue-note strong { color: #1d7a45; }
+    .funnel-cloud .accrue-note strong { color: #14402c; }
+
+    /* ── Source figure (original chart image) ── */
+    .fig { margin: 18px 0 10px; }
+    .fig img { width: 100%; height: auto; display: block; border: 1px solid #e4e4e4; border-radius: 10px; background: #fff; }
+    .fig-cap { text-align: center; font-size: 0.84rem; color: #666; font-style: italic; margin-top: 9px; }
+    .fig-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 760px) { .fig-2 { grid-template-columns: 1fr; } }
+
+    /* ── Two-column compare (IQ vs EQ) ── */
+    .vs2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 10px; }
+    @media (max-width: 700px) { .vs2 { grid-template-columns: 1fr; } }
+    .vs-card { border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px 16px; }
+    .vs-card h4 { font-size: 0.9rem; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+    .vs-card .vs-sub { font-size: 0.78rem; color: #888; margin-bottom: 10px; }
+    .vs-card ul { padding-left: 18px; margin: 0; }
+    .vs-card li { font-size: 0.9rem; margin-bottom: 7px; color: #333; }
+    .vs-down { background: #fff6f5; } .vs-down h4 { color: #b5462f; }
+    .vs-up { background: #f3fbf6; } .vs-up h4 { color: #1d7a45; }
+    .vs-tag { font-size: 0.64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 2px 9px; }
+    .vs-down .vs-tag { background: #f6d9d2; color: #b5462f; } .vs-up .vs-tag { background: #cdeed9; color: #1d7a45; }
+
+    .speaker-tag {
+      display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: .04em;
+      background: #eef3ff; color: #3a5bd5; border: 1px solid #d6e0ff; border-radius: 999px;
+      padding: 2px 10px; margin-bottom: 14px;
+    }
+    .src-link { font-size: 0.8rem; color: #999; }
+    .src-link a { color: #1d7a45; text-decoration: none; }
+    .src-link a:hover { text-decoration: underline; }
+    .katex { font-size: 1em; }
+
+    /* ── Save-as-PDF button ── */
+    .pdf-actions { text-align: center; margin: -18px 0 30px; }
+    .btn-pdf {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #1a1a1a; color: #fff; border: none; border-radius: 999px;
+      padding: 9px 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: background .15s, opacity .15s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
+    .btn-pdf:hover { background: #333; }
+    .btn-pdf[disabled] { opacity: .6; cursor: progress; }
+
+    /* ── Print / PDF stylesheet ── */
+    @media print {
+      @page { margin: 14mm 12mm; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html { scroll-behavior: auto; }
+      body { background: #fff; padding: 0; font-size: 11pt; line-height: 1.5; }
+      .page-title { font-size: 20pt; margin-bottom: 4px; }
+      .page-subtitle { margin-bottom: 18px; }
+      .sidebar, .pdf-actions, .chapter-footer, .chevron,
+      .btn-collapse, .btn-next, .sub-collapse-header .chevron-orange { display: none !important; }
+      .layout { display: block; max-width: none; margin: 0; gap: 0; }
+      .container { gap: 0; }
+
+      /* show everything — nothing hidden behind collapse */
+      .chapter.collapsed .chapter-body { display: block !important; }
+      .sub-collapse-body { display: block !important; }
+
+      /* each chapter starts on a fresh page (except the first) */
+      .chapter { break-before: page; box-shadow: none; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px; }
+      #ch1 { break-before: avoid; }
+      .chapter-header { break-inside: avoid; break-after: avoid; cursor: default; }
+
+      /* keep visual units from splitting across pages */
+      .fig, .fig-2, .table-wrap, table, img, .tip-box, .warn-box, .quote-box,
+      .stat-grid, .stat-card, .vs2, .vs-card, .cake, .accrue, .hbar-chart,
+      .share-bar, .sub-collapse, .costbar-wrap { break-inside: avoid; }
+      h2, h3, .chart-title { break-after: avoid; }
+      p, li { orphans: 3; widows: 3; }
+      a { color: #1d7a45; text-decoration: none; }
+      .fig img { max-width: 100%; height: auto; }
+    }
+
+    /* ── Era timeline (mobile vs AI) ── */
+    .tl { border: 1px solid #e6e6e6; border-radius: 10px; overflow: hidden; margin: 16px 0 10px; }
+    .tl-row { display: grid; grid-template-columns: 168px 1fr 1fr; }
+    .tl-row + .tl-row { border-top: 1px solid #eee; }
+    .tl-h { background: #1a1a1a; color: #fff; font-weight: 700; font-size: 0.8rem; padding: 11px 14px; }
+    .tl-stage { font-weight: 700; font-size: 0.84rem; padding: 13px 14px; background: #fafafa; color: #111; display: flex; align-items: center; }
+    .tl-cell { padding: 13px 14px; font-size: 0.85rem; border-left: 1px solid #eee; color: #333; }
+    .tl-year { display: block; font-weight: 700; font-size: 0.78rem; color: #3a7bd5; margin-bottom: 2px; }
+    .tl-now { background: #f3fbf6; }
+    .tl-now .tl-year { color: #1d7a45; }
+    .tl-here { display: inline-block; margin-top: 6px; font-size: 0.7rem; font-weight: 700; color: #1d7a45; background: #cdeed9; border-radius: 999px; padding: 2px 9px; }
+    @media (max-width: 700px) { .tl-row { grid-template-columns: 1fr; } .tl-cell { border-left: none; border-top: 1px solid #f0f0f0; } }
+  </style>
+</head>
+<body>
+
+<div class="page-title">Economics of the AI Supercycle</div>
+<div class="page-subtitle">Reading notes &middot; Stanford MS&amp;E&nbsp;435, Spring&nbsp;&rsquo;26 (Apoorv Agrawal &amp; guests) &middot; Classes&nbsp;1&ndash;4 + companion essays</div>
+<div class="pdf-actions">
+  <button class="btn-pdf" id="pdfBtn" onclick="exportPDF()">&#128196;&nbsp; Save as PDF</button>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Contents</div>
+    <nav>
+      <ol>
+        <li>
+          <a href="#ch1">1. Where&rsquo;s the Money in AI?</a>
+          <ul>
+            <li><a href="#ch1-triangle">The inverted triangle</a></li>
+            <li><a href="#ch1-cake">The five-layer cake</a></li>
+            <li><a href="#ch1-marginal">Why AI &ne; cloud</a></li>
+            <li><a href="#ch1-cycles">Lessons from past supercycles</a></li>
+            <li><a href="#ch1-profit">Profit by layer</a></li>
+            <li><a href="#ch1-scorecard">The 2026 scorecard</a></li>
+            <li><a href="#ch1-silicon">The custom-silicon wildcard</a></li>
+            <li><a href="#ch1-consumer">Consumer AI &amp; monetization</a></li>
+            <li><a href="#ch1-traininf">Training vs inference</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#ch2">2. The Economics of Inference</a>
+          <ul>
+            <li><a href="#ch2-marginal">The end of zero marginal cost</a></li>
+            <li><a href="#ch2-token">The token as atomic unit</a></li>
+            <li><a href="#ch2-groq">Groq &amp; deterministic compute</a></li>
+            <li><a href="#ch2-deal">The Nvidia&ndash;Groq deal</a></li>
+            <li><a href="#ch2-cost">Why inference keeps getting cheaper</a></li>
+            <li><a href="#ch2-bubble">The bubble debate</a></li>
+            <li><a href="#ch2-agents">Agents, harnesses &amp; safety</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#ch3">3. From Electrons to Tokens</a>
+          <ul>
+            <li><a href="#ch3-capex">The CapEx supercycle</a></li>
+            <li><a href="#ch3-diglabor">Digital labor</a></li>
+            <li><a href="#ch3-energy">The energy-first thesis</a></li>
+            <li><a href="#ch3-cost">What $60M/MW buys</a></li>
+            <li><a href="#ch3-revenue">Making money: payback math</a></li>
+            <li><a href="#ch3-longshort">Long / short the stack</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#ch4">4. We Already Have AGI</a>
+          <ul>
+            <li><a href="#ch4-agi">The provocation</a></li>
+            <li><a href="#ch4-context">The context problem</a></li>
+            <li><a href="#ch4-dynamo">Dynamo to computer</a></li>
+            <li><a href="#ch4-connector">The connector story</a></li>
+            <li><a href="#ch4-software">Is software dead?</a></li>
+            <li><a href="#ch4-value">Where value accrues</a></li>
+            <li><a href="#ch4-advice">Career advice</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#ch5">5. The State of Consumer AI</a>
+          <ul>
+            <li><a href="#ch5-usage">Usage: the 20&times; run</a></li>
+            <li><a href="#ch5-tiers">App tiers &amp; stock vs flow</a></li>
+            <li><a href="#ch5-seasonal">Threats that faded</a></li>
+            <li><a href="#ch5-engagement">Engagement &amp; retention</a></li>
+            <li><a href="#ch5-smile">The smile curve</a></li>
+            <li><a href="#ch5-time">Time is money</a></li>
+            <li><a href="#ch5-ads">Ads vs subscription</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#ch6">6. Where Does Value Go From Here?</a>
+          <ul>
+            <li><a href="#ch6-stack">Value migrates up the stack</a></li>
+            <li><a href="#ch6-timeline">Mobile vs AI: what inning?</a></li>
+            <li><a href="#ch6-native">The native company isn&rsquo;t born</a></li>
+            <li><a href="#ch6-counter">The counter-argument</a></li>
+            <li><a href="#ch6-bottom">Bottom line</a></li>
+          </ul>
+        </li>
+      </ol>
+    </nav>
+  </aside>
+
+  <div class="container">
+
+  <!-- ════════════════ CHAPTER 1 ════════════════ -->
+  <div class="chapter" id="ch1">
+    <div class="chapter-header" onclick="toggleChapter('ch1')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">1</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#128176; Where&rsquo;s the Money in AI?</div>
+          <div class="chapter-label">Class 1 &middot; Apoorv Agrawal (Altimeter)</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">Lecturer: Apoorv Agrawal &middot; Partner, Altimeter Capital</span>
+      <p>
+        The opening lecture frames the entire course around one question: <strong>the AI build-out is
+        consuming hundreds of billions in capital &mdash; where does the economic value actually
+        land?</strong> Apoorv leads the AI practice at Altimeter, a concentrated public + private
+        investment firm that &ldquo;repositioned its entire focus&rdquo; around this supercycle. His
+        claim is that this is the biggest technology cycle yet &mdash; bigger than internet, mobile,
+        or cloud &mdash; and that in five years everyone will ask you, <em>&ldquo;Did you see it
+        coming?&rdquo;</em>
+      </p>
+
+      <h2 id="ch1-triangle">The inverted triangle</h2>
+      <p>
+        The signature slide is a value-accrual map of the AI ecosystem. In cloud and software, the
+        money pooled at the <em>top</em> &mdash; the application layer &mdash; producing a healthy
+        pyramid. In AI today the shape is <strong>inverted</strong>: value concentrates at the
+        <em>bottom</em> of the stack (silicon), and the application layer is comparatively tiny.
+      </p>
+
+      <div class="fig">
+        <img loading="lazy" alt="Where does value accrue in the Gen AI stack? Cloud (apps $400B at top) vs Generative AI inverted triangle (semis $75B at bottom), Q1 2024" src="https://substackcdn.com/image/fetch/$s_!CADs!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F48e9c94a-881a-4148-945f-8475bb485737_2048x955.png">
+        <div class="fig-cap">The signature contrast (Q1&nbsp;2024): in cloud the money pools at <em>apps</em> (top); in generative AI it pools at <em>semis</em> (bottom) &mdash; an inverted triangle. Source: Apoorv Agrawal / Altimeter (@apoorv03).</div>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Where does value accrue in AI? Q1 2026 estimated annual revenue by layer" src="https://substackcdn.com/image/fetch/$s_!T85K!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F0310bf44-2cfe-403a-a702-62cc7e499f48_2030x926.png">
+        <div class="fig-cap">Two years and ~5&times; growth later (Q1&nbsp;2026), the shape barely changed: apps ~$60B, infra ~$75B, semis ~$300B. Source: Apoorv Agrawal / Altimeter.</div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THE CORE PUZZLE</div>
+        <p>In two years the AI ecosystem grew <strong>~5&times;, from ~$90B to ~$435B</strong> in annualized revenue &mdash; yet the <em>shape</em> barely changed. Semis still take <strong>~79% of gross profit</strong>; the app layer grew 12&times; but is still tiny. The central bet of the course: will it flip toward the cloud/software shape &mdash; in 5 years, 10, 15, or never? (Apoorv now estimates <em>well over a decade</em>.)</p>
+      </div>
+      <p>Students proposed several theories for why AI looks so different from cloud, and Apoorv endorsed all of them as partial truths:</p>
+      <ul>
+        <li><strong>It&rsquo;s early.</strong> The cycle is young; triangles take years to flip.</li>
+        <li><strong>Nvidia has a stranglehold.</strong> One player &ldquo;runs the tables&rdquo; on the most profitable layer.</li>
+        <li><strong>The physics are different.</strong> Inference is genuinely expensive to run, unlike near-free software distribution.</li>
+      </ul>
+
+      <h2 id="ch1-cake">The five-layer cake</h2>
+      <p>
+        Borrowing Jensen Huang&rsquo;s framing, the AI stack is a &ldquo;five-layer cake.&rdquo; A data
+        center turns power and chips into capacity you can rent <em>by the hour</em> (to train) or
+        <em>by the token</em> (to serve).
+      </p>
+      <div class="cake">
+        <div class="cake-row cake-apps"><span class="cake-name">Apps</span><span class="cake-desc">ChatGPT, Gemini, Claude, coding agents, vertical SKUs (Salesforce Einstein, Palantir AIP)</span></div>
+        <div class="cake-row cake-model"><span class="cake-name">Models</span><span class="cake-desc">OpenAI, Anthropic, Gemini, xAI &mdash; the labs training frontier weights</span></div>
+        <div class="cake-row cake-infra"><span class="cake-name">Infra</span><span class="cake-desc">Inference / cloud layer &mdash; most competitive, highest &ldquo;metabolic rate,&rdquo; least stable equilibrium</span></div>
+        <div class="cake-row cake-power"><span class="cake-name">Power</span><span class="cake-desc">Energy, interconnects, memory &mdash; the physical substrate</span></div>
+        <div class="cake-row cake-semis"><span class="cake-name">Semis</span><span class="cake-desc">Chips &mdash; Nvidia plus the ASIC programs (TPU, Trainium, MTIA &hellip;)</span></div>
+      </div>
+      <div class="cake-caption">The stack, top to bottom. Today value pools at the bottom; the bet is that it migrates upward over time.</div>
+
+      <p>How Apoorv attributes conglomerates and &ldquo;old-economy&rdquo; reinventors:</p>
+      <ul>
+        <li><strong>Google</strong> is split by business unit: TPU &rarr; semis, GCP &rarr; infra, Gemini &rarr; apps.</li>
+        <li><strong>Salesforce / Palantir</strong> AI SKUs are captured in the app layer &ldquo;by way of the substrate&rdquo; &mdash; their model/inference spend shows up there even if it&rsquo;s hard to extract from disclosures.</li>
+      </ul>
+
+      <h2 id="ch1-marginal">Why AI isn&rsquo;t cloud</h2>
+      <p>
+        Marc Andreessen&rsquo;s &ldquo;software ate the world&rdquo; worked because the marginal cost of
+        another user was ~zero &mdash; SaaS ran at 80&ndash;90% gross margins. AI breaks that model:
+        <strong>the incremental AI user is not free</strong> because you have to &ldquo;burn the
+        GPUs.&rdquo; This is why large consumer-AI businesses can still be unprofitable at billions in
+        revenue.
+      </p>
+
+      <h2 id="ch1-cycles">Lessons from past supercycles</h2>
+      <p>
+        Triangles flip slowly. AWS is the canonical example of how long the CapEx-to-value lag runs:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Milestone</th><th>Year</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>AWS founded / first CapEx</td><td>2004</td><td>&ldquo;Is Amazon going to go bankrupt?&rdquo; was the loudest question on earnings calls</td></tr>
+            <tr><td>First external customer (Netflix)</td><td>2010</td><td>~6 years to a marquee tenant</td></tr>
+            <tr><td>Amazon fully shifts to AWS</td><td>2012</td><td><strong>~8 years</strong> from breaking ground to the model paying off</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Apoorv suspects the AI triangle may stay inverted <em>longer</em> than cloud&rsquo;s ~decade,
+        because getting the &ldquo;substrate&rdquo; right is so hard. Two things could re-price the
+        bottom layers: (1) a <strong>breakout ASIC program</strong> at a hyperscaler (TPU, MTIA,
+        Trainium, etc.), or (2) hyperscalers <strong>stopping their big CapEx guidance</strong> &mdash;
+        which would imply the current equilibrium doesn&rsquo;t work. He recommends listening to
+        hyperscaler earnings calls four times a year as free CEO-level signal.
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; SUPERCYCLE WINNERS &amp; INTEGRATION</div>
+        <p>Each prior cycle minted a dominant, vertically-integrated winner &mdash; <strong>internet &rarr; Google</strong> (~$3T, ~99% search share), <strong>mobile &rarr; Apple</strong>, <strong>social &rarr; Meta</strong> (&ldquo;maybe lost a trillion by not going down to the servers&rdquo;). Cloud was the exception: a heterogeneous oligopoly (AWS / GCP / Azure), nobody fully integrated. The open question for AI: one integrated winner, or another oligopoly?</p>
+      </div>
+
+      <h2 id="ch1-profit">Profitability by layer</h2>
+      <p>
+        Viewed through margins, the triangle is <em>even more</em> concentrated than it looks by
+        revenue. The further <em>up</em> the stack, the thinner the margin &mdash; so even as revenue
+        spreads, profit stays pinned to the bottom.
+      </p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">~73%</div><div class="stat-label">Semis gross margin</div></div>
+        <div class="stat-card"><div class="stat-num">~55%</div><div class="stat-label">Infrastructure gross margin</div></div>
+        <div class="stat-card"><div class="stat-num">~33%</div><div class="stat-label">Application gross margin</div></div>
+        <div class="stat-card"><div class="stat-num">~40%</div><div class="stat-label">Share of Nvidia&rsquo;s fleet used for inference (vs ~60% training)</div></div>
+      </div>
+
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="Gross margins by layer: semis ~73%, infra ~55%, apps ~33%" src="https://substackcdn.com/image/fetch/$s_!F06c!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8df10c62-91e8-457f-bff0-ffd98dc2fe2d_2012x860.png">
+          <div class="fig-cap">Gross margin compresses up the stack: semis ~73%, infra ~55%, apps ~33%.</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="Gross-profit share by layer, semis declining from 87% to 79%" src="https://substackcdn.com/image/fetch/$s_!YvZD!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F54b528e3-82a4-4e13-bc21-34822c2b7f37_1664x1336.png">
+          <div class="fig-cap">Gross-profit share: semis still take ~79% (down only ~8 pts from 87% in 2024).</div>
+        </div>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Revenue growth by layer over two years, semis adding far more than apps" src="https://substackcdn.com/image/fetch/$s_!v75D!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe5c4d9a9-d4d0-401b-9177-07529e5b6af7_1670x1298.png">
+        <div class="fig-cap">Incremental revenue added by layer over two years &mdash; semis (~$225B) dwarf apps (~$55B). Source: Apoorv Agrawal / Altimeter.</div>
+      </div>
+      <p>
+        The dollar gap is the punchline: over two years the semis layer added <strong>~$225B</strong>
+        of revenue versus <strong>~$55B</strong> for apps &mdash; and <strong>Nvidia alone added ~$175B</strong>,
+        roughly <strong>3&times; the entire app layer</strong>. Inside each layer the concentration is
+        extreme, which Apoorv compresses into one line:
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; ONE LINE TO REMEMBER</div>
+        <p>&ldquo;<strong>Semiconductors are a one-player game. Apps are a two-player game. Infrastructure is the only competitive layer.</strong>&rdquo; Nvidia is ~80% of the ~$300B semis layer (~$250B; Broadcom ~$34B, custom-HBM ~$25B); OpenAI + Anthropic are ~75% of the ~$60B app layer (~$45B); only infra is spread across Azure / AWS / GCP / Oracle ($10&ndash;20B each) plus CoreWeave (~$6B).</p>
+      </div>
+
+      <h2 id="ch1-scorecard">The 2026 scorecard: capex and the ROI question</h2>
+      <p>
+        The build-out that feeds the bottom of the triangle keeps accelerating. Hyperscaler capex is
+        the clearest tell:
+      </p>
+      <div class="fig">
+        <img loading="lazy" alt="Hyperscaler capex 2024-2026 rising from ~$256B to ~$443B to ~$600B+" src="https://substackcdn.com/image/fetch/$s_!iBUK!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa33a36fb-d608-478f-9932-d84986186281_1183x559.png">
+        <div class="fig-cap">Hyperscaler capex: ~$256B (2024) &rarr; ~$443B (2025, +73%) &rarr; ~$600B+ (2026 est.). Source: Apoorv Agrawal / Altimeter.</div>
+      </div>
+      <p>
+        About <strong>75% (~$450B)</strong> of the 2026 number is aimed at AI infrastructure &mdash; and
+        the unanswered question is the return on it. The hyperscaler CEOs (the &ldquo;listen four times
+        a year&rdquo; signal) are betting yes, with varying candor:
+      </p>
+      <ul>
+        <li><strong>Andy Jassy (Amazon):</strong> &ldquo;As fast as we&rsquo;re adding capacity&hellip; we&rsquo;re monetizing it.&rdquo;</li>
+        <li><strong>Sundar Pichai (Google):</strong> conceded there are &ldquo;elements of irrationality&rdquo; in the spend, while asserting positive ROI.</li>
+        <li><strong>Mark Zuckerberg (Meta):</strong> argues for aggressively front-loading capacity &mdash; the worst case is merely &ldquo;building new infrastructure slowly&rdquo; into demand you already have.</li>
+      </ul>
+
+      <h2 id="ch1-silicon">The custom-silicon wildcard</h2>
+      <p>
+        Apoorv&rsquo;s &ldquo;biggest variable&rdquo; for whether margins ever compress and profit shifts
+        upstream is the hyperscalers&rsquo; in-house accelerator (ASIC) programs. The competitive
+        pressure is already real: Anthropic&rsquo;s order of up to <strong>1 million Google TPUs</strong>
+        reportedly pushed Nvidia to cut pricing <strong>~30%</strong> for some customers.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Program</th><th>Status (2026)</th><th>Signal</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Google TPU</strong></td><td>7th-gen &ldquo;Ironwood&rdquo; GA; sold as merchant hardware</td><td>Most mature; Anthropic ordered up to 1M chips; forced Nvidia price cuts</td></tr>
+            <tr><td><strong>Amazon Trainium</strong></td><td>1.4M Trainium2 deployed; Trainium3 (3nm) in production</td><td>Custom-chip business ~$10B run-rate, triple-digit growth; powers most Bedrock inference</td></tr>
+            <tr><td><strong>OpenAI ASIC + AMD</strong></td><td>10 GW Broadcom custom accelerators (from 2026) + 6 GW AMD MI450</td><td>Diversifying off Nvidia at gigawatt scale</td></tr>
+            <tr><td><strong>Microsoft Maia</strong></td><td>Maia 200 in Azure; claims 3&times; Trainium3 on inference</td><td>Already powering a portion of ChatGPT workloads</td></tr>
+            <tr><td><strong>Meta MTIA</strong></td><td>MTIA v3 for internal inference; acquired Rivos (RISC-V)</td><td>Internal-only, but reduces Nvidia dependence</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Cumulative AI compute capacity by chip type in H100-equivalents, Nvidia dominant with custom silicon at the margins" src="https://substackcdn.com/image/fetch/$s_!l_3_!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2b4e875a-1015-4982-b064-24a88a6f7d14_2048x1515.png">
+        <div class="fig-cap">Cumulative AI compute by chip type (H100-equivalents): Nvidia still overwhelming, with custom silicon emerging at the margins. Source: Apoorv Agrawal / Altimeter.</div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; WHY THIS IS THE HINGE</div>
+        <p>If even one ASIC program has &ldquo;breakout success&rdquo; (Apoorv&rsquo;s Class&nbsp;1 point), it becomes the single biggest re-pricing event for the semis layer &mdash; the most likely way the inverted triangle finally starts to flip. So far, custom silicon shows up only &ldquo;at the margins,&rdquo; and Nvidia still adds 3&times; the app layer in a year.</p>
+      </div>
+
+      <h2 id="ch1-consumer">Consumer AI and the monetization gap</h2>
+      <p>
+        Outside coding, consumer AI is the biggest market &mdash; but it barely monetizes. Apoorv
+        benchmarks the leading AI app against the great consumer franchises:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Franchise</th><th>Users</th><th>ARPU / year</th></tr></thead>
+          <tbody>
+            <tr><td>Alphabet</td><td>~4B</td><td>~$100</td></tr>
+            <tr><td>Meta</td><td>~3.5B</td><td>~$70</td></tr>
+            <tr><td>ChatGPT (leading AI app)</td><td>~1B (95% free)</td><td><strong>~$10</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>So there are two gaps to close, and Apoorv is skeptical of the obvious answers:</p>
+      <ul>
+        <li><strong>1B &rarr; 4B users.</strong> Knowledge work alone won&rsquo;t get there &mdash; not everyone online does &ldquo;active&rdquo; query work. You&rsquo;d have to go beyond knowledge work.</li>
+        <li><strong>$10 &rarr; $100 ARPU.</strong> Probably not subscription &mdash; likely <strong>ads</strong>. AI ads could price well because of logged-in identity, understood intent, strong attribution, and trust. (Echoes the &ldquo;ads won&rsquo;t work on phones&rdquo; skepticism before mobile ads exploded.)</li>
+      </ul>
+      <p>
+        He also maps AI apps onto a taxonomy of consumer products &mdash; <strong>mandatory</strong>
+        (WhatsApp, Chrome, YouTube; ~3B), <strong>social</strong> (Instagram, TikTok, Facebook;
+        network effects; ~1.5&ndash;2B), and <strong>niche</strong> (Spotify, Amazon, Twitter). Today
+        ChatGPT has just overtaken the <em>niche</em> tier and is heading toward <em>social</em>;
+        Gemini trails (with the question of how much is product quality vs Google&rsquo;s distribution
+        advantage). As an investor he&rsquo;d have loved to see it head straight for &ldquo;mandatory
+        utility,&rdquo; but knowledge work may cap it short of that.
+      </p>
+
+      <h2 id="ch1-traininf">Training vs inference</h2>
+      <p>
+        Whether the triangle flips may hinge on inference eventually dwarfing training. The
+        shapes of the two workloads differ sharply:
+      </p>
+      <ul>
+        <li><strong>Training:</strong> predictable, high-utilization, bursts of intense work over a short window.</li>
+        <li><strong>Inference:</strong> bursty, human-driven (&ldquo;dips around Thanksgiving and Christmas&rdquo;), harder to predict &mdash; until agents run 24/7.</li>
+      </ul>
+      <p>
+        Nvidia has quoted inference at ~40% of its fleet; Apoorv expects that to drift toward
+        inference over time, but won&rsquo;t call when. There&rsquo;s also a timing mismatch baked into
+        the cycle: semis are built for 5&ndash;6-year horizons while app revenue is &ldquo;for right
+        now,&rdquo; which makes the lower half of the stack cyclical &mdash; &ldquo;like laying down
+        the railroads.&rdquo;
+      </p>
+
+      <div class="sub-collapse" id="sub-ch1-quiz">
+        <div class="sub-collapse-header" onclick="toggleSubCollapse('sub-ch1-quiz')">
+          <span>&#127942; Day-one quiz &mdash; and the hidden hint</span>
+          <span class="chevron-orange">&#8963;</span>
+        </div>
+        <div class="sub-collapse-body">
+          <p>The class opened with a live quiz naming companies across the stack &mdash; answers included <strong>Nvidia</strong>, <strong>CoreWeave</strong>, and <strong>Crusoe</strong>. The hidden hint: every right answer is a CEO scheduled to guest-teach later in the course (Crusoe&rsquo;s Chase Lochmiller appears in Class 3). Apoorv&rsquo;s framing for those guests: <em>are you dominant, how long do you stay dominant, what are your pricing-compression vectors, and &mdash; for infra startups &mdash; are you a feature or a platform? (i.e., &ldquo;why is this not already part of AWS?&rdquo;)</em></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch1')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToChapter('ch2')">Next Chapter &nbsp;&#8594;</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ CHAPTER 2 ════════════════ -->
+  <div class="chapter" id="ch2">
+    <div class="chapter-header" onclick="toggleChapter('ch2')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">2</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#9889; The Economics of Inference</div>
+          <div class="chapter-label">Class 2 &middot; Brad Gerstner (Altimeter) &amp; Sunny Madra (Nvidia / ex-Groq)</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">Guests: Brad Gerstner, Founder/CEO Altimeter &middot; Sunny Madra, ex-President of Groq, now at Nvidia</span>
+      <p>
+        Class 2 zooms into the most contested layer: <strong>inference</strong> &mdash; the actual
+        production of tokens. Brad founded Altimeter in 2008 (now ~$15B AUM) and is an investor in
+        OpenAI, Anthropic, Nvidia, Cerebras, and Groq. Sunny is a serial founder whose company Groq
+        was acquired by Nvidia for ~$20B &mdash; Nvidia&rsquo;s largest acquisition ever. Together
+        they unpack why the unit economics of intelligence are flipping from scary to attractive.
+      </p>
+
+      <h2 id="ch2-marginal">The end of zero marginal cost</h2>
+      <p>
+        The premise restated: software produced near-zero incremental cost of distribution; AI does
+        not. More users means more compute. To set scale, Sunny opens with global GDP per capita over
+        2,000 years &mdash; flat for ~1,800 years, then vertical.
+      </p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">~25 yrs</div><div class="stat-label">Time to double global GDP today (was centuries)</div></div>
+        <div class="stat-card"><div class="stat-num">5% &rarr; 13%</div><div class="stat-label">Tech as a share of global GDP &mdash; and rising</div></div>
+        <div class="stat-card"><div class="stat-num">15% vs 6%</div><div class="stat-label">NASDAQ vs non-tech EPS growth (10-yr CAGR)</div></div>
+        <div class="stat-card"><div class="stat-num">10&times; / 10&times;</div><div class="stat-label">Demis Hassabis: 10&times; the impact of the Industrial Revolution, at 10&times; the speed</div></div>
+      </div>
+      <p>
+        Brad&rsquo;s through-line: innovation is itself a societal good (correlated with lower poverty,
+        higher literacy, more democracy, lower child mortality), and AI accelerates it. His advice to
+        students recurs all session: <strong>&ldquo;make yourself bionic with AI&rdquo;</strong> &mdash;
+        he&rsquo;d rather hire someone who delivers &ldquo;abnormal, bionic value&rdquo; than someone
+        with a pedigree who refuses the tools.
+      </p>
+
+      <h2 id="ch2-token">The token as the atomic unit</h2>
+      <p>
+        &ldquo;The atomic unit of AI is the token.&rdquo; And tokens are brutally compute-hungry. The
+        rough cost to generate a single token scales as the model&rsquo;s parameter count times the
+        square of the context length:
+      </p>
+      <p style="text-align:center;">$$\text{FLOPs per token} \;\approx\; (\text{parameters}) \times (\text{context length})^2$$</p>
+      <p>
+        Sunny&rsquo;s contrast: a database lookup (e.g., Snowflake) is a modest number of compute
+        cycles; generating one token is &ldquo;mind-boggling&rdquo; by comparison &mdash; several
+        orders of magnitude more than any prior computing paradigm. Then <strong>reasoning
+        models</strong> arrived, far more voracious in token consumption even before agents &mdash; and
+        token-consumption curves &ldquo;went parabolic,&rdquo; with clouds starting to break when
+        OpenAI and Anthropic each had only ~1 GW of compute.
+      </p>
+
+      <h2 id="ch2-groq">Groq and deterministic compute</h2>
+      <p>
+        Groq was founded by <strong>Jonathan Ross</strong> &mdash; creator of Google&rsquo;s TPU, a
+        high-school dropout who went straight into a PhD math program. Groq&rsquo;s chip is a
+        <strong>deterministic data-flow architecture</strong>: paired with a compiler that
+        pre-determines exactly where every calculation happens.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dimension</th><th>GPU (Nvidia)</th><th>Groq</th></tr></thead>
+          <tbody>
+            <tr><td>Memory</td><td>Lots of external HBM (slower)</td><td>Lots of on-chip <strong>SRAM</strong> (&gt;10&times; faster bandwidth, like a giant L1 cache)</td></tr>
+            <tr><td>Compute</td><td>Very high on-die compute</td><td>Less compute, memory-bandwidth optimized</td></tr>
+            <tr><td>Execution</td><td>Dynamic scheduling</td><td>Fully deterministic, compiler-placed</td></tr>
+            <tr><td>Interconnect</td><td>NVLink (72 GPUs today &rarr; 576)</td><td>Custom protocol, thousands of chips (ran models on 4&ndash;8K chips)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The go-to-market insight: rather than convince people to buy unfamiliar hardware, Groq put
+        chips <em>in the cloud</em> behind an API and served the best open-source models (including
+        OpenAI&rsquo;s Whisper). Developers are fungible if there&rsquo;s an API &mdash; Groq Cloud went
+        from a couple hundred thousand to <strong>~4M users in a short time</strong> (Nvidia took ~17
+        years to reach ~7M). Notably, a 2018/2019-era <strong>14nm</strong> Groq chip stayed
+        competitive against Hopper &mdash; five silicon generations newer.
+      </p>
+      <div class="quote-box">
+        <p>&ldquo;Jensen came on my podcast and said, &lsquo;Everything just changed &mdash; inference-time reasoning. We&rsquo;ve gone from pre-training to inference-time reasoning, and inference is about to <strong>1 billion X</strong>.&rsquo;&rdquo;</p>
+        <div class="quote-attr">&mdash; Brad Gerstner, recounting Jensen Huang</div>
+      </div>
+
+      <h2 id="ch2-deal">The Nvidia&ndash;Groq deal: disaggregating inference</h2>
+      <p>
+        The technical heart of the deal is <strong>disaggregation</strong>. Inference splits into
+        <em>prefill</em> and <em>decode</em>; many teams already separate machines for each. Groq went
+        further and disaggregated <em>within decode</em> &mdash; some functions are compute-intensive,
+        others memory-bandwidth-intensive. Via <strong>NVLink Fusion</strong>, Groq&rsquo;s SRAM
+        chips speak to Nvidia GPUs, letting each system run the part of the problem it&rsquo;s best at.
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THE FACTORY MENTAL MODEL</div>
+        <p>An inference data center is a factory: <strong>power + chips go in one end, tokens come out the other.</strong> For the <em>same</em> power-and-building footprint, combining the two architectures yields <strong>~2.5&times; more tokens</strong>. In a world constrained by power and memory, doubling/tripling tokens per footprint is an enormous economic win for an OpenAI or Anthropic.</p>
+      </div>
+      <p>
+        The deal also reads as a lesson in how big outcomes turn on one decision: Sunny texted Brad an
+        idea, Brad spent &ldquo;political capital&rdquo; emailing Jensen, a working prototype followed,
+        and ~30 days later came the ~$20B acquisition. It worked culturally <em>because</em> Groq
+        wasn&rsquo;t &ldquo;a better GPU&rdquo; &mdash; an SRAM/deterministic/compiler chip is
+        complementary, not competitive, to Nvidia&rsquo;s engineering org. (Nvidia is now &ldquo;seven
+        chips across five racks,&rdquo; already disaggregating storage, CPU, compute, networking.)
+      </p>
+
+      <h2 id="ch2-cost">Why inference keeps getting cheaper (and chips get pricier)</h2>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">~90%</div><div class="stat-label">Drop in inference cost over the last year</div></div>
+        <div class="stat-card"><div class="stat-num">~99%</div><div class="stat-label">Drop over the last ~2.5 years</div></div>
+      </div>
+      <p>Three inputs drive the unit cost of intelligence:</p>
+      <ol>
+        <li><strong>Supply chain</strong> &mdash; centered on Taiwan (TSMC), packaging and lithography.</li>
+        <li><strong>Engineering innovation</strong> &mdash; circuit layout, memory bandwidth, quantization (e.g., NVFP4). This is where most gains now come from.</li>
+        <li><strong>Power</strong> &mdash; how much energy you can bring to bear.</li>
+      </ol>
+      <div class="warn-box">
+        <div class="warn-label">&#9888;&#65039; THE CUBE THAT WON&rsquo;T SIT STILL</div>
+        <p>Lithography is hitting limits (Moore&rsquo;s law slowing), so the industry compensates with bigger chips (Cerebras&rsquo; pizza-box wafer) and quantization. But as fast as efficiency improves, <strong>models get bigger</strong> (rumored 1&ndash;10 trillion parameters) and <strong>demand keeps rising</strong>. Even a 50&times; efficiency gain over 5 years can be outrun &mdash; which is why <strong>H100 prices are actually going up</strong>, not down.</p>
+      </div>
+      <p>
+        The payoff: OpenAI and Anthropic started with <em>highly negative</em> gross margins
+        (&ldquo;produce a widget for $1, sell it for 20&cent;&rdquo;). The bet was that inference cost
+        would fall <em>and</em> willingness-to-pay would rise as intelligence got more valuable. AI is
+        moving from the &ldquo;answers&rdquo; era (autocomplete, a better Google) into the
+        <strong>&ldquo;action&rdquo; era</strong> &mdash; agents that build apps, resolve tickets, book
+        travel. When AI <em>does things</em>, tokens consumed jump ~10&times; but value delivered jumps
+        ~100&times;, so willingness-to-pay rises faster than cost. Both labs are now at
+        &ldquo;very positive gross margins.&rdquo;
+      </p>
+      <div class="quote-box">
+        <p>&ldquo;Technology is highly deflationary &mdash; but I&rsquo;ve never seen something this deflationary this quickly. It&rsquo;s not a single chip, it&rsquo;s a factory, with all sorts of Moore&rsquo;s laws playing out combinatorially across it.&rdquo;</p>
+        <div class="quote-attr">&mdash; Brad Gerstner</div>
+      </div>
+
+      <h2 id="ch2-bubble">The bubble debate</h2>
+      <p>
+        The 2026 question, pressed by skeptics like Bill Gurley: are the labs spending at rates they
+        can never pay off? Brad&rsquo;s &ldquo;Oppenheimer moment&rdquo; was watching Anthropic&rsquo;s
+        revenue scale on the same exponential as intelligence:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Month</th><th>Anthropic monthly revenue (annualized run-rate)</th></tr></thead>
+          <tbody>
+            <tr><td>January</td><td>~$3.5B</td></tr>
+            <tr><td>February</td><td>~$8B</td></tr>
+            <tr><td>March</td><td>~$10.5B &mdash; <em>+$10B annualized added in a single month</em> (&asymp; Databricks + Palantir combined)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Crucially, that revenue wasn&rsquo;t bought with a million salespeople &mdash; millions of
+        self-interested customers independently decided &ldquo;I have to have this.&rdquo; Brad
+        contrasts this with his uncomfortable BG2 exchange with Sam Altman: <strong>~$1.4T in spending
+        commitments against ~$13B of revenue</strong>; Sam&rsquo;s reply (&ldquo;if you don&rsquo;t
+        like your investment, I&rsquo;ll buy back your shares&rdquo;) wasn&rsquo;t the reassurance Brad
+        hoped for &mdash; but the revenue curve since then resolved much of the doubt.
+      </p>
+      <div class="warn-box">
+        <div class="warn-label">&#9888;&#65039; WHY THE INSIDERS AREN&rsquo;T WORRIED ABOUT OVERBUILD</div>
+        <p>Today&rsquo;s capabilities were trained on <em>older</em> hardware &mdash; Blackwell/Vera/Rubin-trained models haven&rsquo;t shipped yet. Anthropic and OpenAI plan to add <strong>more compute this year than all labs combined over the prior decade</strong>, then double again. With the world consuming <strong>tens of trillions of tokens per week</strong>, Sunny &amp; Brad read demand as first/second-inning, not an overbuild.</p>
+      </div>
+
+      <h2 id="ch2-agents">Agents, harnesses, and the safety overhang</h2>
+      <p>
+        A big driver of token growth is the <strong>harness</strong> around models &mdash; Claude
+        Code, Codex, and tools like &ldquo;Open Claw&rdquo; that keep an agent in a continuous loop,
+        pinging you on your phone when stuck and working all night. Inside Nvidia, a personal
+        assistant wired to Slack, Teams, email, and files drafts each morning&rsquo;s task list; agents
+        increasingly email <em>other</em> agents. Anecdote: Marc Andreessen noted people now spending
+        $100&ndash;$1,000/day on token consumption.
+      </p>
+      <div class="quote-box">
+        <p>&ldquo;This week Anthropic&rsquo;s unreleased model, Mythos, found a bug in BSD &mdash; code that countless engineers had reviewed. We&rsquo;ve gone to a place where it&rsquo;s doing things beyond human capability. And we&rsquo;re in year three.&rdquo;</p>
+        <div class="quote-attr">&mdash; Sunny Madra</div>
+      </div>
+      <p>
+        On safety: a model (&ldquo;Mythos&rdquo;) was sandboxed, &ldquo;tried to escape,&rdquo; and was
+        hardened via <strong>Project Glass Wing</strong> &mdash; an industry consortium (Amazon,
+        Microsoft, etc.) that found and patched ~26 Safari vulnerabilities before public release.
+        Brad&rsquo;s framing: powerful technology is dual-use (&ldquo;splitting the atom&rdquo;) &mdash;
+        be optimistic but not Pollyannaish, and beware fear-mongering aimed at regulatory capture.
+      </p>
+      <h3>Careers: IQ commoditizes, EQ appreciates</h3>
+      <p>
+        A student asked the question on everyone&rsquo;s mind: <em>if AI keeps driving the marginal
+        value of raw intelligence toward zero, how do we make sure we&rsquo;re not wasting our
+        time?</em> Brad&rsquo;s answer is part historical pattern, part bet on which human skills
+        survive. The pattern: every major shift destroys a category of work and pushes humans to a
+        higher-order one. The craftsperson who could build a wheel start-to-finish was genuinely great
+        at it &mdash; and was completely disintermediated by mass production; it didn&rsquo;t feel good,
+        but the world didn&rsquo;t stop and those people found new things to do. We went from ~80% of
+        people in farming and manufacturing to ~70% in <em>services</em> &mdash; paying for jobs that
+        barely existed before (coaches, instructors, therapists). The base rate is that humans
+        <strong>relocate up the value chain</strong>, not into permanent idleness.
+      </p>
+      <div class="vs2">
+        <div class="vs-card vs-down">
+          <h4>&#128201; IQ &mdash; commoditizes <span class="vs-tag">cheap &amp; abundant</span></h4>
+          <div class="vs-sub">What the machine now does instantly, at infinite scale</div>
+          <ul>
+            <li>Being the fastest solver at the whiteboard</li>
+            <li>Recalling more facts / knowing more</li>
+            <li>Raw computation and analysis speed</li>
+            <li>One-shot &ldquo;right answer&rdquo; problem-solving</li>
+          </ul>
+        </div>
+        <div class="vs-card vs-up">
+          <h4>&#128200; EQ &mdash; appreciates <span class="vs-tag">scarce &amp; durable</span></h4>
+          <div class="vs-sub">The human-to-human bottleneck that turns intelligence into outcomes</div>
+          <ul>
+            <li><strong>Networks</strong> &mdash; who you can mobilize</li>
+            <li><strong>Persuasion</strong> &mdash; changing the mind of the person next to you</li>
+            <li><strong>Team formation</strong> &mdash; assembling &amp; holding a group together</li>
+            <li><strong>Leadership, taste &amp; accountability</strong> &mdash; deciding <em>what</em> is worth doing</li>
+          </ul>
+        </div>
+      </div>
+      <p>
+        When a capability becomes abundant and near-free, its price collapses &mdash; and you
+        can&rsquo;t out-compute a machine at the whiteboard. So scarcity, and value, move to the
+        relational, judgment-laden work machines don&rsquo;t do. Brad framed it as a future tweet:
+        <strong>IQ gets commoditized, EQ becomes super valuable.</strong>
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THE ACTIONABLE HALF: &ldquo;MAKE YOURSELF BIONIC&rdquo;</div>
+        <p>Brad says he no longer cares much where you went to school &mdash; he wants someone who shows up and delivers <strong>&ldquo;abnormal, bionic value,&rdquo;</strong> meaning a human who pairs their EQ with the machine&rsquo;s IQ. The losing move is the candidate who says <em>&ldquo;I don&rsquo;t use AI, I do everything by hand.&rdquo;</em> The nuance: you still must learn the fundamentals &mdash; you can&rsquo;t lead or judge work you don&rsquo;t understand. EQ isn&rsquo;t a substitute for competence; it&rsquo;s the durable layer <em>on top</em> of it.</p>
+      </div>
+      <p>
+        The flip side of commoditized intelligence is <strong>access</strong>. Expertise that used to be
+        a luxury becomes broadly available &mdash; intelligence as a public good that raises the floor
+        for billions, even as it removes the premium on raw cleverness:
+      </p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">~98%</div><div class="stat-label">Who could never afford a specialized private <strong>tutor</strong> &mdash; now can</div></div>
+        <div class="stat-card"><div class="stat-num">~97%</div><div class="stat-label">Who were priced out of <strong>concierge-grade</strong> medicine / advice &mdash; now reachable</div></div>
+      </div>
+      <p>
+        Sunny added an optimistic coda: with machines now making discoveries on their own &mdash; novel
+        mathematics, without waiting for &ldquo;an apple to fall on Newton&rsquo;s head&rdquo; &mdash; the
+        pace of progress goes more vertical, which only <em>raises</em> the premium on humans who can
+        direct and harness it. It rhymes with <strong>Ali Ghodsi&rsquo;s</strong> point in Chapter&nbsp;4:
+        the binding constraint isn&rsquo;t model intelligence, it&rsquo;s the human work of context,
+        judgment, and organizational rewiring &mdash; the EQ layer, again.
+      </p>
+      <p>
+        Brad&rsquo;s closing forecast: he&rsquo;s publicly predicted <strong>Nvidia will be the first
+        $10T company</strong> &mdash; trading ~13&times; earnings, ~70% growth, ~$1T of sales booked
+        over the next eight quarters &mdash; arguing the bull case is less about one company than about
+        the sheer size of the market for intelligence. Apple, by contrast, is &ldquo;nervous&rdquo;
+        about its wait-and-ride strategy, constrained by privacy and the fact that even an 8B-parameter
+        model can drain an iPhone in 30 minutes.
+      </p>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch2')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToChapter('ch3')">Next Chapter &nbsp;&#8594;</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ CHAPTER 3 ════════════════ -->
+  <div class="chapter" id="ch3">
+    <div class="chapter-header" onclick="toggleChapter('ch3')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">3</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#127981; From Electrons to Tokens</div>
+          <div class="chapter-label">Class 3 &middot; Chase Lochmiller (Crusoe)</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">Guest: Chase Lochmiller &middot; Founder/CEO, Crusoe</span>
+      <p>
+        &ldquo;Today we&rsquo;re going to talk about the data centers that you guys are melting.&rdquo;
+        Class 3 makes the build-out physical. Chase founded Crusoe, a vertically-integrated AI
+        infrastructure company, and is an avid mountaineer &mdash; the company&rsquo;s ethos is
+        &ldquo;plan A, plan B, and a plan C to the plan B.&rdquo; The deck&rsquo;s title:
+        <strong>from electrons to tokens.</strong>
+      </p>
+
+      <h2 id="ch3-capex">The CapEx supercycle</h2>
+      <p>
+        The defining chart is hyperscaler AI CapEx going &ldquo;up and to the right, fast.&rdquo;
+        To contextualize the magnitude:
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; SCALE OF THE BUILD-OUT</div>
+        <p>This is <strong>bigger than the space program, bigger than the highway system, bigger than the Manhattan Project</strong> &mdash; second only to the US defense budget. The hyperscalers are spending on the order of <strong>$650B</strong> building these data centers, and many of those companies are Crusoe customers.</p>
+      </div>
+      <p>What does it actually take to produce AI? Chase&rsquo;s basic equation:</p>
+      <p style="text-align:center;">$$\text{AI} \;=\; \text{Data} \;+\; \text{Algorithms} \;+\; \text{Compute} \;+\; \text{Energy} \;+\; \text{Data Centers}$$</p>
+      <ul>
+        <li><strong>Data</strong> &mdash; created a market for labeling (Scale AI, Mercor, even Handshake).</li>
+        <li><strong>Algorithms</strong> &mdash; backprop, transformers, recursive learning; lives in the labs.</li>
+        <li><strong>Compute + Energy + Data Centers</strong> &mdash; Crusoe&rsquo;s focus, and &ldquo;where a lot of the money&rsquo;s being spent.&rdquo;</li>
+      </ul>
+
+      <h2 id="ch3-diglabor">Why tokens are valuable: digital labor</h2>
+      <p>
+        Chase reaches for the <strong>Cobb-Douglas</strong> production model &mdash; GDP growth is a
+        function of changes in labor, capital, and technology:
+      </p>
+      <p style="text-align:center;">$$\Delta\,\text{GDP} \;=\; f\big(\Delta L,\; \Delta K,\; \Delta T\big)$$</p>
+      <p>
+        Historically, labor (&Delta;L) could only grow via the birth rate &mdash; a 20-year lead
+        time with a massive incubation period. <strong>For the first time in history we can grow
+        labor digitally</strong>: when you hand an agent a task (&ldquo;build me a CRM&rdquo;), that
+        is digital labor brought into the world by buying GPUs and data centers. That&rsquo;s why the
+        investment is so broad-based &mdash; the prize is accelerating GDP itself.
+      </p>
+
+      <h2 id="ch3-energy">The energy-first thesis</h2>
+      <p>
+        Crusoe is vertically integrated specifically because <strong>the bottleneck keeps
+        moving</strong>: from chips, to power, to memory, to labor, to electrical equipment (switchgear,
+        chillers, turbines). Today the binding constraint is <strong>energized, powered shells</strong>
+        &mdash; places where you can plug in chips and turn them on. Chips themselves have
+        &ldquo;softened&rdquo; as a bottleneck.
+      </p>
+      <p>
+        Crusoe&rsquo;s founding insight (the &ldquo;Robinson Crusoe&rdquo; name): markets are roughly
+        efficient, so don&rsquo;t be the next me-too developer in Northern Virginia. Instead, find
+        stranded low-cost energy and <strong>move the data to the power, not the power to the
+        data.</strong>
+      </p>
+      <div class="sub-collapse" id="sub-ch3-abilene">
+        <div class="sub-collapse-header" onclick="toggleSubCollapse('sub-ch3-abilene')">
+          <span>&#127359; Case study: Abilene, TX &mdash; &ldquo;Project Stargate&rdquo;</span>
+          <span class="chevron-orange">&#8963;</span>
+        </div>
+        <div class="sub-collapse-body">
+          <p>West Texas is consistently windy and sunny, so renewable developers over-built generation (chasing production tax credits) &mdash; with too little transmission to move it. Power prices went <em>negative</em>. Crusoe&rsquo;s pitch: &ldquo;Have we got a power-hungry application for you.&rdquo;</p>
+          <ul>
+            <li><strong>2.1 GW</strong> campus in aggregate &mdash; &ldquo;two Denvers&rdquo; worth of power.</li>
+            <li>A <strong>1 GW substation</strong> &mdash; the largest privately-owned substation in the US.</li>
+            <li>Eight buildings for <strong>Oracle + OpenAI</strong> (Project Stargate); a southern expansion for <strong>Microsoft</strong>; backed by a ~350 MW on-site natural-gas plant.</li>
+            <li>Designed as <strong>one coherent cluster</strong> &mdash; all chips on the same high-performance back-end network, so a single training job spans every building.</li>
+            <li><strong>~9,000 people on site daily</strong> (a 5,000-car parking lot) in a town of ~120,000; steady-state operating staff ~2,000.</li>
+          </ul>
+          <p>A second site sits in &mdash; fittingly &mdash; <strong>Claude, Texas</strong> (population ~1,500; ~3,500 workers on site), using an &ldquo;across-the-meter&rdquo; design: on-site wind/solar/battery/gas feeds the data center, surplus is sold back to the grid (lowering local rates), and the grid firms up power during maintenance or calm, dark spells.</p>
+        </div>
+      </div>
+
+      <h2 id="ch3-cost">What $60M per megawatt buys</h2>
+      <p>
+        Chase normalizes everything <strong>per megawatt</strong>. The build splits into the shell +
+        power plant (~$20M/MW) and the IT/compute fit-out (~$40M/MW) &mdash; roughly
+        <strong>$60M per MW</strong> all-in, or <strong>~$60B for a 1 GW cluster</strong>.
+      </p>
+      <h3>Data center + power plant (~$20M / MW)</h3>
+      <p>
+        Power distribution centers step 34.5&nbsp;kV down to 480/415&nbsp;V; UPS/battery systems smooth
+        it; chillers run a closed ~1M-gallon water loop per building (filled once, then recirculated
+        &mdash; annual top-up &asymp; a single-family home, debunking the &ldquo;AI drinks all the
+        water&rdquo; narrative). Gas turbines from a tiny supplier pool (GE Vernova, Siemens,
+        Mitsubishi, Pratt &amp; Whitney, Caterpillar/Solar) have tripled from ~$1M to ~$3M/MW. And
+        <strong>capitalized construction labor runs ~$4.7M/MW</strong> &mdash; ~$4.7B/yr for a gigawatt &mdash;
+        a real bottleneck (not enough electricians, welders, plumbers, pipefitters).
+      </p>
+      <h3>IT CapEx (~$40M / MW)</h3>
+      <div class="costbar-wrap">
+        <div class="costbar"><div class="costbar-label">GPUs (&ldquo;why Jensen smiles&rdquo;)</div><div class="costbar-track"><div class="costbar-fill" style="width:75%;"></div></div><div class="costbar-val">~$30M/MW</div></div>
+        <div class="costbar"><div class="costbar-label">Networking (NVLink, InfiniBand)</div><div class="costbar-track"><div class="costbar-fill" style="width:10%;"></div></div><div class="costbar-val">~$4M/MW</div></div>
+        <div class="costbar"><div class="costbar-label">CPUs + storage</div><div class="costbar-track"><div class="costbar-fill" style="width:7.5%;"></div></div><div class="costbar-val">~$3M/MW</div></div>
+        <div class="costbar"><div class="costbar-label">In-room fit-out, deploy, ship</div><div class="costbar-track"><div class="costbar-fill" style="width:7.5%;"></div></div><div class="costbar-val">~$3M/MW</div></div>
+      </div>
+      <p>
+        A surprise shortage: <strong>CPUs</strong>. Agentic workflows need lots of CPU to orchestrate
+        the GPU work. And contrary to the &ldquo;next-gen makes old chips worthless&rdquo; fear,
+        <strong>H100 (and Blackwell) spot prices have risen</strong> &mdash; agent demand pushed used
+        H100s above their original price &mdash; which feeds the Wall Street debate over the right
+        <strong>depreciation</strong> schedule (5 years standard, 6 common, possibly longer).
+      </p>
+
+      <h2 id="ch3-revenue">Making money: the payback math</h2>
+      <p>
+        Spend ~$60M/MW up front; ongoing OpEx is surprisingly light (~$1&ndash;2M/MW for power,
+        insurance, on-site repair). The question is revenue:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Business model</th><th>Revenue / MW / yr</th><th>Payback on ~$60M/MW</th></tr></thead>
+          <tbody>
+            <tr><td>Rent raw chips (bare infrastructure)</td><td>~$15M</td><td>~4 years</td></tr>
+            <tr><td>+ Managed services (host the model, serve tokens via API)</td><td>~$30M (optimistic)</td><td><strong>~2 years</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The value uplift comes from climbing from electrons toward tokens &mdash; serving an actual
+        model endpoint, not just renting GPUs. Crusoe also abstracts the silicon (you shouldn&rsquo;t
+        know or care if you&rsquo;re on an A100, H100, or MI300, &ldquo;just like you don&rsquo;t check
+        the CPU behind Zoom&rdquo;), and built <strong>Crusoe Spark</strong> &mdash; self-contained
+        modular data centers (500 kW air-cooled units; 2 MW liquid-cooled) manufactured centrally to
+        cut labor and infra costs ~30&ndash;50%.
+      </p>
+
+      <h2 id="ch3-longshort">Long / short the stack</h2>
+      <ul>
+        <li><strong>Short (long-term):</strong> the <strong>electrical-stack incumbents</strong> (Eaton, Schneider) &mdash; great near-term (on the critical path) but vulnerable if they don&rsquo;t innovate as the stack shifts to solid-state transformers, power electronics, and 900V DC. &ldquo;A huge opportunity for the electrical engineers in the room.&rdquo;</li>
+        <li><strong>Short (also):</strong> closed-source model players &mdash; Chase thinks <strong>open source will do well</strong> and take share.</li>
+        <li><strong>What&rsquo;s never a commodity:</strong> <strong>scale</strong>, and the cutting edge &mdash; the newest silicon always commands a premium, even as older compute commoditizes and Nvidia&rsquo;s ~80% margins drift toward ~60% &ldquo;stabilized silicon&rdquo; margins over time.</li>
+        <li><strong>Data centers in space</strong> (Crusoe + Starcloud, first H100s launched): no concrete, no permitting, optical interconnect &mdash; but hard thermals and impossible repairs (&ldquo;you&rsquo;re not sending an astronaut to RMA a chip&rdquo;). Not material for ~5&ndash;10 years, but plausibly major long-term.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; ADVICE TO STUDENTS</div>
+        <p>&ldquo;The exact things you learn in school don&rsquo;t matter that much &mdash; it&rsquo;s the <em>process</em> of learning.&rdquo; Crusoe&rsquo;s values: <strong>think like a mountaineer</strong> and <strong>live on the infinite growth loop</strong> &mdash; nobody&rsquo;s a finished product; daily compounding is the most valuable asset you have. Focus less on <em>what</em> you study and more on <em>how</em> you leverage AI tools.</p>
+      </div>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch3')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToChapter('ch4')">Next Chapter &nbsp;&#8594;</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ CHAPTER 4 ════════════════ -->
+  <div class="chapter" id="ch4">
+    <div class="chapter-header" onclick="toggleChapter('ch4')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">4</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#129504; We Already Have AGI</div>
+          <div class="chapter-label">Class 4 &middot; Ali Ghodsi (Databricks)</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">Guest: Ali Ghodsi &middot; Co-founder/CEO, Databricks</span>
+      <p>
+        The final class is a contrarian fireside with Ali Ghodsi, who took Databricks from a data
+        business to a lakehouse business to an AI business across ~20,000 customers. His message to a
+        stressed-out room: <em>&ldquo;You guys can chill out.&rdquo;</em> The hype makes people take
+        on tunnel vision and chase whatever&rsquo;s loud on Twitter instead of working on the right
+        things.
+      </p>
+
+      <h2 id="ch4-agi">The provocation: AGI is already here</h2>
+      <p>
+        Ali argues the &ldquo;quest for superintelligence&rdquo; is unwarranted &mdash; partly because
+        nobody defines it &mdash; and that <strong>we already have AGI</strong>. His live demonstration
+        of how the goalposts move:
+      </p>
+      <ol>
+        <li>&ldquo;Who thinks we have AGI already?&rdquo; &rarr; ~10% raise hands.</li>
+        <li>&ldquo;Who thinks many people you interact with are <em>not</em> as smart as the best models you use?&rdquo; &rarr; most hands go up.</li>
+        <li>&ldquo;Now &mdash; who thinks we <em>don&rsquo;t</em> have AGI yet?&rdquo; &rarr; the room contradicts itself.</li>
+      </ol>
+      <p>
+        He notes that by the working definition of AGI used at Berkeley&rsquo;s AMP Lab in 2009 (where
+        the &ldquo;Michael Jordan of AI,&rdquo; Michael Jordan, worked), &ldquo;we&rsquo;ve hit
+        that&rdquo; &mdash; people just keep moving the goalpost (&ldquo;it can&rsquo;t count the
+        R&rsquo;s in strawberry, therefore no AGI&rdquo;). Implication: blowing huge sums on ever-more
+        GPUs in pursuit of god-like superintelligence may not be what&rsquo;s actually needed.
+      </p>
+
+      <h2 id="ch4-context">The context problem</h2>
+      <p>
+        So if we have AGI, why is the MIT report saying <strong>~95% of enterprise POCs fail</strong>,
+        and why are real companies still &ldquo;just humans shuffling TPS reports&rdquo; (Office
+        Space)? Ali&rsquo;s answer is simple:
+      </p>
+      <div class="quote-box">
+        <p>&ldquo;The models don&rsquo;t have the context that humans have inside organizations. There&rsquo;s always that one person &mdash; &lsquo;go ask John or Jane, she knows everything&rsquo; &mdash; who&rsquo;s been there 20 years. What&rsquo;s in their head isn&rsquo;t in the model. If you don&rsquo;t get that context into the AI, it does stupid things and it&rsquo;s useless.&rdquo;</p>
+        <div class="quote-attr">&mdash; Ali Ghodsi</div>
+      </div>
+      <p>
+        The takeaway and the call to action: <strong>the bottleneck is human/organizational, not model
+        intelligence.</strong> &ldquo;Your AI strategy starts with your data strategy.&rdquo; Whoever
+        figures out how to download organizational context &mdash; carbon into silicon &mdash; into the
+        agents will have massive impact, because the underlying intelligence is already sufficient.
+      </p>
+
+      <h2 id="ch4-dynamo">Dynamo to computer: the 40-year diffusion lag</h2>
+      <p>
+        Ali grounds the &ldquo;why is nothing working yet?&rdquo; question in history (recommending the
+        Stanford paper <em>&ldquo;The Dynamo and the Computer&rdquo;</em>):
+      </p>
+      <ul>
+        <li><strong>PCs:</strong> Robert Solow&rsquo;s quip &mdash; &ldquo;you can see computers everywhere except in the productivity statistics.&rdquo; People used PCs as typewriters, then printed and filed the output.</li>
+        <li><strong>Electricity:</strong> when the electric dynamo replaced the steam engine, factories first just swapped the engine in place &mdash; no productivity gain. It took <strong>~40 years (1880&ndash;1920)</strong> until they re-architected the factory floor (spread-out single-story plants, unit drive vs group drive) to capture the gains.</li>
+      </ul>
+      <p>
+        AI is the same: the gains come from <strong>rewiring the organization</strong>, not from
+        dropping a model into the old process &mdash; and that&rsquo;s slow, painful, human work.
+      </p>
+
+      <h2 id="ch4-connector">The connector story</h2>
+      <p>
+        Ali&rsquo;s favorite illustration, from inside Databricks. Building a production-ready
+        connector (e.g., Databricks &harr; Salesforce) took ~3 quarters (9 months). Ali, playing with
+        LLMs, wrote one in two days and asked the team why it took so long.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attempt</th><th>Result</th><th>Lesson</th></tr></thead>
+          <tbody>
+            <tr><td>Team&rsquo;s first pass with AI</td><td>9 months &rarr; 7.5 months</td><td>Just adding AI to the old process barely helped (Amdahl&rsquo;s law)</td></tr>
+            <tr><td>First-principles rewire</td><td><strong>7 connectors in 1 quarter</strong></td><td>The win came from process change, not a smarter model</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>What actually changed (and what people resisted):</p>
+      <ul>
+        <li>Requirements: 1 quarter of Stanford-grade PMs writing 80-page reports &rarr; <strong>1 week</strong>, accepting it&rsquo;ll be wrong and iterating (software is now cheap to rewrite).</li>
+        <li>Test environments (standing up Salesforce/Workday/NetSuite): <strong>outsourced and parallelized</strong>.</li>
+        <li>Staffing: one person per connector (bus-factor-one risk) &rarr; <strong>seven people on seven connectors together</strong>.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THE PUNCHLINE</div>
+        <p>&ldquo;GPT-7 or Opus-6 would not have helped us do this better.&rdquo; The unlock was a <strong>human refactoring / process change</strong> &mdash; exactly what the whole economy is going through. The constraint is organizational design, not raw model capability.</p>
+      </div>
+
+      <h2 id="ch4-software">Is software dead?</h2>
+      <p>
+        &ldquo;Software&rsquo;s been dead four times &mdash; it always bounces back.&rdquo; If <em>all</em>
+        software were dead, so would be OpenAI, Anthropic, and Nvidia (all software/IP companies). What
+        has actually changed is two-fold:
+      </p>
+      <ul>
+        <li><strong>Barriers to entry collapsed</strong> &mdash; anyone can produce software near-zero cost. But that weapon is available to incumbents too (Databricks uses it).</li>
+        <li><strong>Switching costs collapsed</strong> &mdash; if you just talk to an agent, you no longer care whether it&rsquo;s driving Salesforce or a competitor, iPhone or Android. The UI lock-in evaporates.</li>
+      </ul>
+      <p>
+        But software isn&rsquo;t the only moat. Ali points to <em>Seven Powers</em> (Hamilton Helmer):
+        <strong>economies of scale, brand</strong> (Ferrari, Rolex), <strong>trust/security/patents,
+        switching costs, and data</strong>. His tell: a company that&rsquo;s been around 10 years,
+        hasn&rsquo;t innovated (same software), yet revenue keeps rising &mdash; <em>should be very
+        afraid</em>; it&rsquo;s lost the innovation muscle. Incumbents that <em>do</em> get their act
+        together have advantages (data, customers, scale) &mdash; but &ldquo;easier said than
+        done.&rdquo;
+      </p>
+      <p>
+        He also nods to Ethan Mollick&rsquo;s <strong>&ldquo;jagged frontier&rdquo;</strong>: AI is
+        superhuman at some tasks (coding, parts of support) and terrible at others. Most companies sit
+        in the middle &mdash; &ldquo;AI helping me with some tasks&rdquo; &mdash; precisely because the
+        context isn&rsquo;t in the model. Even Databricks finds its own support hard to automate (the
+        hard tickets are the ones humans get stuck on).
+      </p>
+
+      <h2 id="ch4-value">Where value accrues</h2>
+      <p>
+        Asked to allocate $100 across Jensen&rsquo;s five layers, Ali (&ldquo;I&rsquo;m a computer
+        scientist, not an investor&rdquo;) says <strong>value moves up the stack over time</strong>
+        &mdash; IBM/PC &rarr; OS/Microsoft &rarr; virtualization/VMware. So he&rsquo;d bet on
+        <strong>applications</strong>, via an early-stage seed strategy (most fail; a few become the
+        next Google). He agrees with Apoorv&rsquo;s &ldquo;blue triangle&rdquo; &mdash; today all the
+        money is with &ldquo;one guy&rdquo; (Jensen) &mdash; and bets it inverts over time.
+      </p>
+      <div class="warn-box">
+        <div class="warn-label">&#9888;&#65039; THE FRONTIER-MODEL BUSINESS</div>
+        <p>Open source is closing the gap fast &mdash; from months to ~a month. (Moonshot&rsquo;s <strong>Kimi 2.6</strong>, released that Tuesday, would have been &ldquo;the best model ever produced&rdquo; had it shipped in January.) Ali&rsquo;s prediction: serving frontier models becomes an <strong>economies-of-scale, low-margin game &mdash; &ldquo;like amazon.com selling books.&rdquo;</strong> Tiny gross margins, few players, &ldquo;token factories&rdquo; like the cloud.</p>
+      </div>
+      <p>Two &ldquo;obvious in hindsight&rdquo; trillion-dollar app bets, by analogy to the weird winners of the internet (Uber = a taxi business, Amazon = selling books, Airbnb = renting your bedroom):</p>
+      <ul>
+        <li><strong>Healthcare</strong> (~17% of US GDP): imagine an AI that&rsquo;s &ldquo;seen a billion patients&rdquo; with your genetic profile &mdash; willingness-to-pay is near-infinite for your loved ones&rsquo; health.</li>
+        <li><strong>Education</strong> (VC consensus says it&rsquo;s a bad investment &mdash; no trillion-dollar, even $100B, company exists): yet parents care intensely; elections turn on it. Provably better AI education would command huge spend. Both would have data moats, scale moats, and winner-take-all dynamics by geography.</li>
+      </ul>
+
+      <h2 id="ch4-advice">Career advice: ignore the hype</h2>
+      <p>
+        Ali&rsquo;s cautionary tale is the <strong>multicast problem</strong>: during his early-2000s
+        PhD, &ldquo;all the smartest brains&rdquo; worked on efficiently broadcasting one stream to the
+        world &mdash; until bandwidth costs collapsed and the problem simply evaporated. The field had
+        tunnel vision on internet <em>protocols</em> (BGP, QoS) while the real winners turned out to be
+        &ldquo;weird&rdquo; apps nobody took seriously.
+      </p>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THINK LONG-TERM (THE BEZOS MOVE)</div>
+        <p>Airbnb could have launched in 2001 &mdash; it took until 2009 for someone (with a real bed-and-breakfast pain) to have the idea. Good ideas are rare; humans have tunnel vision. Bezos zoomed out, made a secular bet on &ldquo;more internet over time,&rdquo; and started with the un-sexiest commodity &mdash; books. <strong>Chill out, take a long-term perspective, work on what has durable impact &mdash; and don&rsquo;t chase the loudest thing on Twitter; it&rsquo;s probably another multicast.</strong></p>
+      </div>
+      <p>
+        Rapid-fire close: favorite AI products &mdash; Claude Code (&ldquo;I like the diffs&rdquo;) plus
+        Databricks&rsquo; own Genie for numerical/time-series decisions. Vision for Databricks: ride the
+        &ldquo;SaaS apocalypse&rdquo; and &ldquo;kill some software,&rdquo; while remaining one of the
+        survivors with data, scale, and customers.
+      </p>
+
+      <div class="tip-box">
+        <div class="tip-label">&#127919; SYNTHESIS ACROSS THE FOUR CLASSES</div>
+        <p><strong>Where&rsquo;s the money? (Apoorv)</strong> Today it&rsquo;s at the bottom &mdash; the inverted triangle &mdash; and the whole question is whether and when it flips upward. <strong>Why? (Brad &amp; Sunny)</strong> Because intelligence is produced in a power- and memory-constrained factory; the economics flip from negative to positive as cost falls ~99% and willingness-to-pay rises with agentic action. <strong>The physical reality (Chase):</strong> ~$60M/MW of concrete, copper, turbines, and labor turn stranded electrons into tokens, with a 2&ndash;4 year payback. <strong>The catch (Ali):</strong> the model is already smart enough &mdash; value will accrue up the stack to applications that solve the <em>human context</em> and <em>organizational rewiring</em> problem, while frontier models commoditize toward thin margins.</p>
+      </div>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch4')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToChapter('ch5')">Next Chapter &nbsp;&#8594;</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ CHAPTER 5 ════════════════ -->
+  <div class="chapter" id="ch5">
+    <div class="chapter-header" onclick="toggleChapter('ch5')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">5</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#128241; The State of Consumer AI</div>
+          <div class="chapter-label">Companion essays &middot; Apoorv Agrawal (apoorv03.com)</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">Data deep-dive: the three-part &ldquo;State of Consumer AI&rdquo; series behind Class&nbsp;1</span>
+      <p>
+        Class&nbsp;1 raised the consumer question &mdash; ~1B users at ~$10 ARPU, and whether ads can
+        close the gap. Apoorv&rsquo;s companion essays answer it with data across three lenses:
+        <strong>usage</strong> (who showed up), <strong>engagement &amp; retention</strong> (who
+        stayed), and <strong>time</strong> (what it&rsquo;s worth). The headline reversal: he had
+        predicted incumbents (Google, Meta) would own consumer AI &mdash; instead
+        <strong>ChatGPT built a utility from scratch, with no prior distribution.</strong>
+        <span class="chart-src">All figures mobile-only (Sensortower) and approximate; web-heavy usage is likely understated.</span>
+      </p>
+
+      <h2 id="ch5-usage">Usage: the 20&times; run</h2>
+      <p>
+        AI apps went from <strong>~100M weekly actives (Jan 2024) to ~1.2B (Feb 2026)</strong> &mdash; a
+        ~20&times; jump in two years &mdash; and the distribution is brutally concentrated:
+      </p>
+      <div class="fig">
+        <img loading="lazy" alt="Total AI app weekly active users from Jan 2024 to Feb 2026, ChatGPT reaching ~900M WAU" src="https://substackcdn.com/image/fetch/$s_!Y06c!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F0bd337a7-4295-495a-9c16-5c72de214bde_2552x1346.png">
+        <div class="fig-cap">AI app weekly actives: ~100M (Jan&nbsp;2024) &rarr; ~1.2B (Feb&nbsp;2026), ~20&times; in two years. Source: Apoorv Agrawal (Sensortower data).</div>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="AI app market share by WAU, ChatGPT ~70%, Gemini ~15-20%, rest ~10%" src="https://substackcdn.com/image/fetch/$s_!qu3Q!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe5e3bf29-c7e1-456d-845b-64a2127ebf95_2694x1382.png">
+        <div class="fig-cap">Share of AI WAU: ChatGPT ~70% (~900M), Gemini ~15&ndash;20%, everyone else ~10% combined.</div>
+      </div>
+      <p>
+        The kicker on <em>how</em> it was built: Gemini leans on Android, Search, and ~4B existing
+        Google users; <strong>ChatGPT reached this scale with none of that.</strong>
+      </p>
+
+      <h2 id="ch5-tiers">App tiers and stock vs flow</h2>
+      <p>
+        Apoorv stratifies consumer apps into three tiers by scale. ChatGPT has already climbed into
+        <em>social-platform</em> territory &mdash; reaching it in ~3 years, faster than Instagram (~5)
+        or TikTok (~4):
+      </p>
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="Consumer app stratification into core utilities, social platforms, and niche apps by user scale" src="https://substackcdn.com/image/fetch/$s_!n2ZN!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffae21676-c24f-4656-a944-8190018839e8_960x540.png">
+          <div class="fig-cap">Three tiers: core utility (~2&ndash;3B), social (~1&ndash;1.5B), niche (~300&ndash;600M).</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="ChatGPT and Gemini positioned against established consumer giants by weekly active users" src="https://substackcdn.com/image/fetch/$s_!m_I9!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8c2473e0-d400-434c-abe0-a745ea2c5bd7_958x432.png">
+          <div class="fig-cap">ChatGPT (~900M) now sits in <em>social-platform</em> territory; Gemini behind it.</div>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; STOCK &times; FLOW</div>
+        <p>The author&rsquo;s test for a monopoly outcome is owning <em>both</em> the installed base (stock) <em>and</em> new downloads (flow). On a stock-vs-flow scatter, <strong>ChatGPT sits top-right</strong> &mdash; a spot only core utilities and dominant social apps occupy. &ldquo;Once one product owns both the base and the flow, the default outcome is further consolidation.&rdquo;</p>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Scatter plot of stock (installed base) versus flow (new downloads) for AI and consumer apps, ChatGPT top-right" src="https://substackcdn.com/image/fetch/$s_!VgZi!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8381c240-fe04-4f11-aa9e-a8bee41b80fe_928x471.png">
+        <div class="fig-cap">Stock (installed base) vs flow (new downloads): ChatGPT occupies the top-right with the core utilities. Source: Apoorv Agrawal.</div>
+      </div>
+
+      <h2 id="ch5-seasonal">The threats that faded</h2>
+      <p>
+        2025 produced a seasonal parade of &ldquo;is OpenAI in trouble?&rdquo; moments &mdash; each a
+        download spike that never converted to <em>sustained</em> usage:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Season</th><th>Challenger</th><th>Spike</th><th>What happened</th></tr></thead>
+          <tbody>
+            <tr><td>Winter &rsquo;25</td><td>DeepSeek</td><td>~25M weekly downloads</td><td>Open-source shock; collapsed within weeks</td></tr>
+            <tr><td>Spring &rsquo;25</td><td>xAI / Grok</td><td>X-driven spikes</td><td>Distribution burst, no sustained usage</td></tr>
+            <tr><td>Summer &rsquo;25</td><td>Gemini (&ldquo;nano banana&rdquo;)</td><td>~20M+ weekly downloads</td><td>Viral image feature; temporary, model-specific</td></tr>
+            <tr><td>All year</td><td><strong>ChatGPT</strong></td><td>Steady, non-volatile</td><td>Compounded consistently with none of the volatility</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Weekly downloads of AI apps over a year showing seasonal spikes from DeepSeek, Grok, and Gemini against steady ChatGPT" src="https://substackcdn.com/image/fetch/$s_!pvqy!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F78973746-927a-4aec-9c09-2ca197eff748_976x494.png">
+        <div class="fig-cap">Weekly downloads: challengers spike and fade; ChatGPT stays steady. Source: Apoorv Agrawal (Sensortower data).</div>
+      </div>
+
+      <h2 id="ch5-engagement">Engagement &amp; retention: who stayed</h2>
+      <p>
+        &ldquo;Usage tells you who showed up. Engagement and retention tell you who stayed.&rdquo; On
+        every stickiness metric, the engagement gap is <em>larger</em> than the market-share gap.
+      </p>
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="Daily engagement DAU:MAU, ChatGPT 45% vs Gemini 22%" src="https://substackcdn.com/image/fetch/$s_!YBrB!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fae4f52d3-3dcd-4b50-b752-28f5551563e9_658x456.png">
+          <div class="fig-cap">Daily engagement (DAU:MAU): ChatGPT ~45% vs Gemini ~22% &mdash; a 2&times; gap.</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="Weekly engagement WAU:MAU benchmarks across consumer, enterprise and AI apps, ChatGPT at 82%" src="https://substackcdn.com/image/fetch/$s_!zAoz!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F28211de4-a41f-4ab8-b9e1-9c91eee12722_1028x544.png">
+          <div class="fig-cap">Weekly engagement (WAU:MAU): ChatGPT ~82% &mdash; into consumer territory (WhatsApp 96%, Instagram 92%, Spotify 79%, Gmail 78%).</div>
+        </div>
+      </div>
+      <p>
+        ChatGPT went from ~50% to <strong>82% WAU:MAU</strong> &mdash; a +30-point gain into
+        consumer-app territory, achieved <em>without</em> a social graph, notifications, or a
+        self-filling inbox &mdash; while daily engagement is <strong>45% vs Gemini&rsquo;s 22%</strong>.
+        That climb, and the early make-or-break Week-4 retention signal:
+      </p>
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="ChatGPT WAU:MAU trend improving from ~50% to 82% over three years" src="https://substackcdn.com/image/fetch/$s_!TV4I!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2cae7bd1-264f-4cc2-95ed-4082bd43a5a4_938x558.png">
+          <div class="fig-cap">ChatGPT engagement climbed from ~50% (mid-2023) to ~82% &mdash; rising, not plateauing.</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="Week-4 retention comparison: ChatGPT 66% vs Character.AI 48%, Gemini 44%, Claude 41%, Perplexity 24%" src="https://substackcdn.com/image/fetch/$s_!Xbn7!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fae725bda-6fd0-457c-b463-9331914a1c2c_976x551.png">
+          <div class="fig-cap">Week-4 retention: ChatGPT 66% vs Character.AI 48%, Gemini 44%, Claude 41%, Perplexity 24%.</div>
+        </div>
+      </div>
+
+      <h2 id="ch5-smile">The smile curve</h2>
+      <p>
+        Most apps&rsquo; retention curves decline or flatten as casual users arrive. ChatGPT shows a
+        rare <strong>&ldquo;smile curve&rdquo;</strong> &mdash; retention dips, then <em>recovers</em> as
+        product updates (voice, vision, canvas, search, memory) win back lapsed users. In the
+        dataset, only <strong>Gmail, Chrome, and ChatGPT</strong> bend back upward.
+      </p>
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="Retention curves showing ChatGPT's rare smile-curve recovery pattern versus flat or declining peers" src="https://substackcdn.com/image/fetch/$s_!eF-1!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F27e3653d-26b8-43e4-977b-e5fa81f4e956_736x528.png">
+          <div class="fig-cap">The &ldquo;smile curve&rdquo;: retention dips, then recovers &mdash; rare; only Gmail, Chrome, ChatGPT show it.</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="ChatGPT Week-4 retention rising from ~40% to ~66% over three years despite user growth" src="https://substackcdn.com/image/fetch/$s_!pX9z!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F3fad1c9a-ea78-4483-8321-b8b0d653256f_790x536.png">
+          <div class="fig-cap">Retention <em>rose</em> from ~40% to ~66% while the user base grew ~10&times;. Source: Apoorv Agrawal.</div>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; THE RARE PART</div>
+        <p>ChatGPT&rsquo;s Week-4 retention <em>rose</em> from ~40% to ~66% <strong>while the user base grew ~10&times;</strong> &mdash; the opposite of normal maturation. High-usage products that failed to build the habit (Google Wave, Clubhouse, BeReal) are the cautionary contrast. The takeaway: &ldquo;the window to displace ChatGPT is narrowing&rdquo; &mdash; not from unbeatable tech, but from compounding habit.</p>
+      </div>
+
+      <h2 id="ch5-time">Time is money</h2>
+      <p>
+        Time spent is the raw material of monetization. Total generative-AI app time grew
+        <strong>~10&times; in two years (3.6&times; in 2025 alone)</strong>, and ChatGPT owns
+        <strong>~68% of it</strong> (Gemini ~16%, rest ~16%). ChatGPT users average
+        <strong>~16 minutes/day</strong> on mobile and have tripled time-per-user since early 2023 &mdash;
+        below TikTok/Instagram, but in the range of enterprise tools like Slack.
+      </p>
+      <div class="fig-2">
+        <div class="fig">
+          <img loading="lazy" alt="Total time spent in generative AI apps growing ~10x over two years with an inflection in early 2025" src="https://substackcdn.com/image/fetch/$s_!I-qQ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F9606cbd9-743a-43f6-b6b1-8373fca7f8d4_1600x928.png">
+          <div class="fig-cap">Total time in AI apps grew ~10&times; in two years (inflection ~Jan&nbsp;2025).</div>
+        </div>
+        <div class="fig">
+          <img loading="lazy" alt="Share of consumer AI time spent: ChatGPT 68%, Gemini 16%, others 16%" src="https://substackcdn.com/image/fetch/$s_!bAUM!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F94bdefde-7835-49db-8b0d-6a44923d1c2a_1600x953.png">
+          <div class="fig-cap">Share of consumer-AI time: ChatGPT ~68%, Gemini ~16%, rest ~16%.</div>
+        </div>
+      </div>
+      <div class="fig">
+        <img loading="lazy" alt="Daily time-per-user benchmarking AI apps against social, video, and enterprise tools" src="https://substackcdn.com/image/fetch/$s_!qNbi!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc944e220-7ed9-4827-9b6a-9c909985cd1a_1600x895.png">
+        <div class="fig-cap">Daily time-per-user: ChatGPT below TikTok/YouTube/Instagram but in the range of enterprise tools. Source: Apoorv Agrawal (mobile-only data).</div>
+      </div>
+
+      <h2 id="ch5-ads">Ads vs subscription</h2>
+      <p>
+        Apoorv&rsquo;s provocative conclusion: for the leaders, <strong>ad revenue may ultimately exceed
+        subscription</strong> &mdash; just as Google&rsquo;s and Meta&rsquo;s ad businesses dwarf any
+        subscription service. The driver is a simple identity:
+      </p>
+      <p style="text-align:center; font-size:1.02rem; font-weight:600; color:#222; margin:6px 0 18px;">
+        Ad revenue &nbsp;=&nbsp; Total Time &nbsp;&times;&nbsp; Ad Load &nbsp;&times;&nbsp; Price (CPM)
+      </p>
+      <ul>
+        <li><strong>Time</strong> &mdash; already at scale (~900M WAU, ~16 min/day).</li>
+        <li><strong>Ad load</strong> &mdash; deliberately tiny to protect trust: Google runs 3&ndash;4 ads/search page, Meta ~1 ad per 3&ndash;5 feed posts; ChatGPT shows ~1 ad/conversation to only ~5% of mobile users.</li>
+        <li><strong>Price (CPM)</strong> &mdash; set by intent, attribution, and audience quality. A logged-in assistant that understands intent should price like search (high), not like a feed.</li>
+      </ul>
+      <div class="chart-title">Ad revenue per user / year &mdash; today vs the prize</div>
+      <div class="hbar-chart">
+        <div class="hbar-row"><span class="hbar-label">Google</span><span class="hbar-track"><span class="hbar-fill hbar-blue" style="width:100%;"></span></span><span class="hbar-val">~$84</span></div>
+        <div class="hbar-row"><span class="hbar-label">Meta</span><span class="hbar-track"><span class="hbar-fill hbar-blue" style="width:68%;"></span></span><span class="hbar-val">~$57</span></div>
+        <div class="hbar-row"><span class="hbar-label">ChatGPT (projected)</span><span class="hbar-track"><span class="hbar-fill hbar-apps" style="width:36%;"></span></span><span class="hbar-val">~$30</span></div>
+        <div class="hbar-row dim"><span class="hbar-label">ChatGPT (today, ~$10)</span><span class="hbar-track"><span class="hbar-fill hbar-apps" style="width:12%;"></span></span><span class="hbar-val">~$10</span></div>
+      </div>
+      <p>
+        The math: <strong>~$30 in annual ad revenue per free user &times; ~800M free users &asymp; ~$25B</strong>
+        &mdash; on top of subscriptions, at a premium ~$60 CPM. The catch is execution: scaling ad load
+        ~20&times; without degrading trust is unproven, and not all AI time is commercial.
+      </p>
+      <div class="fig">
+        <img loading="lazy" alt="Ad revenue vs subscription revenue for Alphabet and Amazon, ads exceeding subscription at scale" src="https://substackcdn.com/image/fetch/$s_!kkII!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fa24fa696-cb48-4bf3-8e65-8141988449dc_1332x950.png">
+        <div class="fig-cap">Why ads win at scale: for both Alphabet and Amazon, ad revenue exceeds subscription. Source: Apoorv Agrawal.</div>
+      </div>
+      <div class="warn-box">
+        <div class="warn-label">&#9888;&#65039; WHY GOOGLE CAN WAIT (AND OPENAI CAN&rsquo;T)</div>
+        <p>Google&rsquo;s ~$295B search-ad business lets it keep Gemini ad-free and monetize via AI Overviews / AI Mode instead &mdash; no pressure to put ads in chat. <strong>OpenAI has no such cushion</strong>, so it must monetize the conversation directly. This connects straight back to Class&nbsp;1: getting ARPU from ~$10 toward ~$100 is the path from a ~1B-user product to a franchise that rivals Alphabet and Meta &mdash; and ads, not subscriptions, are the likeliest road.</p>
+      </div>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch5')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToChapter('ch6')">Next Chapter &nbsp;&#8594;</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ CHAPTER 6 ════════════════ -->
+  <div class="chapter" id="ch6">
+    <div class="chapter-header" onclick="toggleChapter('ch6')">
+      <div class="chapter-header-left">
+        <div class="chapter-num">6</div>
+        <div class="chapter-title-group">
+          <div class="chapter-title">&#128302; Where Does Value Go From Here?</div>
+          <div class="chapter-label">Synthesis &middot; reading the history forward</div>
+        </div>
+      </div>
+      <span class="chevron">&#8963;</span>
+    </div>
+
+    <div class="chapter-body">
+      <span class="speaker-tag">A synthesis of the four classes &mdash; not from a lecture, but reasoning from their history</span>
+      <p>
+        Stitch the four threads together and two questions answer themselves: <strong>where will AI
+        value accrue, and has the category-defining &ldquo;AI-native&rdquo; company (the Uber or
+        Snapchat of this cycle) even been born yet?</strong> The doc&rsquo;s own history is the guide.
+      </p>
+
+      <h2 id="ch6-stack">Value migrates up the stack &mdash; slowly, and conditionally</h2>
+      <p>
+        The pattern is unambiguous across every prior cycle (Ali Ghodsi, Chapter&nbsp;4):
+        <strong>value moves up the stack as each layer below it commoditizes.</strong>
+        IBM/PC &rarr; the OS (Microsoft) &rarr; virtualization (VMware) &rarr; apps. Apoorv&rsquo;s
+        inverted triangle (Chapter&nbsp;1) is the same story mid-flight: today ~79% of gross profit
+        sits in <em>semis</em>, but every supercycle eventually flips so value pools at the
+        <em>application</em> layer. So the direction of travel is
+        <strong>chips &rarr; infra &rarr; models &rarr; apps</strong>. Two caveats the doc hammers on:
+      </p>
+      <ul>
+        <li><strong>It&rsquo;s slow.</strong> AWS took ~8 years to flip; cloud took a decade-plus. Apoorv now estimates the AI triangle takes <em>well over a decade</em> &mdash; and we&rsquo;re only ~3 years in.</li>
+        <li><strong>It&rsquo;s conditional.</strong> The flip needs (a) a <strong>custom-silicon breakout</strong> to crack Nvidia&rsquo;s ~80% grip (TPU / Trainium / Maia &mdash; the Chapter&nbsp;1 wildcard), and (b) <strong>inference cost to keep falling</strong> (~99% already, Chapter&nbsp;2) so app margins stop being negative.</li>
+      </ul>
+      <div class="tip-box">
+        <div class="tip-label">&#128161; MY READ</div>
+        <p>Near-term, <em>profit</em> stays pinned to the bottom (chips) for years. But the <em>durable franchise value</em> &mdash; the thing worth the most in a decade &mdash; accrues to whoever owns the application / orchestration layer and the customer relationship. Ali, Apoorv, and even Brad (&ldquo;value moves up the stack all the time&rdquo;) all converge here.</p>
+      </div>
+
+      <h2 id="ch6-timeline">Mobile vs AI: what inning are we in?</h2>
+      <p>
+        The cleanest way to time it is to line AI up against the mobile supercycle. Mobile&rsquo;s
+        native winners exploited primitives desktop didn&rsquo;t have (GPS, camera, push, always-on).
+        AI&rsquo;s native primitives &mdash; autonomous <strong>agents</strong>, near-free
+        <strong>inference</strong>, <strong>memory</strong>, <strong>multimodality</strong>, tool-use
+        &mdash; only matured into Brad&rsquo;s &ldquo;action era&rdquo; in 2025&ndash;26.
+      </p>
+      <div class="tl">
+        <div class="tl-row">
+          <div class="tl-h">Stage</div>
+          <div class="tl-h">Mobile era</div>
+          <div class="tl-h">AI era</div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-stage">Platform launch</div>
+          <div class="tl-cell"><span class="tl-year">2007</span>iPhone &mdash; the new substrate arrives</div>
+          <div class="tl-cell"><span class="tl-year">Nov 2022</span>ChatGPT &mdash; the new substrate arrives</div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-stage">Foundational layer</div>
+          <div class="tl-cell"><span class="tl-year">2008&ndash;09</span>App Store, SDKs, 3G &mdash; the primitives</div>
+          <div class="tl-cell"><span class="tl-year">2023&ndash;24</span>APIs, cheap inference, reasoning, early agents</div>
+        </div>
+        <div class="tl-row tl-now">
+          <div class="tl-stage">Native breakouts begin</div>
+          <div class="tl-cell"><span class="tl-year">2009&ndash;11</span>Uber, Instagram, Snapchat, WhatsApp &mdash; the &ldquo;weird&rdquo; ones</div>
+          <div class="tl-cell"><span class="tl-year">2025&ndash;26</span>Agents, memory, multimodality just usable<span class="tl-here">&#9664; we are here</span></div>
+        </div>
+        <div class="tl-row">
+          <div class="tl-stage">Value flips up-stack</div>
+          <div class="tl-cell"><span class="tl-year">2014+</span>Apps capture the value; carriers commoditize</div>
+          <div class="tl-cell"><span class="tl-year">~2032&ndash;37?</span>If custom silicon + cheap inference deliver</div>
+        </div>
+      </div>
+      <div class="cake-caption">By mobile&rsquo;s clock, AI is at roughly &ldquo;2009&rdquo; &mdash; the very start of when native breakouts become possible, not the end.</div>
+
+      <h2 id="ch6-native">The AI-native company probably isn&rsquo;t born yet</h2>
+      <p>
+        My honest read: the category-defining <em>consumer</em> AI-native company is most likely very
+        young, unnoticed, or not yet founded. Three reasons straight from the doc:
+      </p>
+      <ol>
+        <li><strong>The &ldquo;weird winners&rdquo; rule (Ali).</strong> The internet&rsquo;s giants sounded absurd in their own era &mdash; a <em>taxi business</em> (Uber), <em>selling books</em> (Amazon), <em>renting your bedroom</em> (Airbnb), <em>short texts</em> (Twitter). Today everyone has tunnel vision on chips / models / AGI &mdash; exactly like the year-2000 obsession with the &ldquo;multicast problem&rdquo; that turned out to be a dead end. The real winner will look unobvious or even dumb today.</li>
+        <li><strong>The idea-lag.</strong> Airbnb <em>could</em> have launched in 2001 but took until 2009. Capability precedes the idea by years; good ideas are rare and need a person with a specific pain, not a platform launch.</li>
+        <li><strong>The primitives just arrived.</strong> You can&rsquo;t build the AI-native &ldquo;Uber&rdquo; until agents, memory, and near-free inference actually work &mdash; which is <em>now</em>, not 2023.</li>
+      </ol>
+      <p>
+        What it probably <em>won&rsquo;t</em> be: a &ldquo;ChatGPT-for-X&rdquo; wrapper. What it likely
+        <em>will</em> be: a company whose core product is impossible without continuous, cheap,
+        agentic intelligence &mdash; selling <strong>outcomes, not software</strong> (Crusoe&rsquo;s
+        &ldquo;digital labor,&rdquo; Chapter&nbsp;3) in a domain with enormous willingness-to-pay.
+        Apoorv and Ali&rsquo;s obvious-in-hindsight bets &mdash; <strong>AI-native healthcare and
+        education</strong> &mdash; are the trillion-dollar candidates; the actual winner may be weirder.
+      </p>
+
+      <h2 id="ch6-counter">The counter-argument (why this cycle might differ)</h2>
+      <p>
+        The doc plants one real tension: <strong>the model layer may absorb the app value instead of
+        leaving it for startups.</strong> OpenAI and Anthropic aren&rsquo;t just infrastructure &mdash;
+        they ship the killer app <em>and</em> own the model, and &ldquo;harnesses&rdquo; like Claude
+        Code show value sitting right against the model. So the AI-native &ldquo;Uber&rdquo; might not
+        be an independent startup at all &mdash; it could be a vertically integrated lab that owns both
+        the intelligence and the application (the way Apple owns the OS <em>and</em> the iPhone). That
+        is exactly Class&nbsp;1&rsquo;s open question: <em>one integrated winner, or an oligopoly?</em>
+      </p>
+      <div class="warn-box">
+        <div class="warn-label">&#9888;&#65039; ONE VERTICAL WHERE IT&rsquo;S ALREADY BORN</div>
+        <p><strong>Coding.</strong> Cursor, Claude Code, and Codex are genuine AI-native breakouts &mdash; the native winner is already here. So the real pattern may be &ldquo;natives arrive <em>vertical-by-vertical</em>,&rdquo; and coding simply went first because the feedback loop is tightest (instant, verifiable, high willingness-to-pay). Watch which vertical crosses that threshold next.</p>
+      </div>
+
+      <h2 id="ch6-bottom">Bottom line</h2>
+      <div class="tip-box">
+        <div class="tip-label">&#127919; THE TWO-SENTENCE ANSWER</div>
+        <p><strong>Value:</strong> migrates up the stack toward apps, but on a 10&ndash;15-year clock gated by custom silicon and falling inference cost &mdash; near-term, chips still win. <strong>The native company:</strong> in coding it&rsquo;s here; in consumer and most other verticals the Uber/Snapchat-scale AI-native is most likely <em>still ahead of us</em> &mdash; and per the &ldquo;weird winners&rdquo; rule, when it appears we&rsquo;ll underrate it at first. The one thing that breaks the analogy is the model labs eating the app layer themselves.</p>
+      </div>
+    </div>
+
+    <div class="chapter-footer">
+      <button class="btn-collapse" onclick="toggleChapter('ch6')">&#8963; Collapse</button>
+      <button class="btn-next" onclick="scrollToTop()">Back to top &nbsp;&#8593;</button>
+    </div>
+  </div>
+
+  <div class="src-link" style="text-align:center; margin-top:8px;">
+    Source lectures: Stanford MS&amp;E&nbsp;435 &mdash;
+    <a href="https://www.youtube.com/watch?v=-ubIUNA-zRA" target="_blank">Class&nbsp;1</a> &middot;
+    <a href="https://www.youtube.com/watch?v=4faCRNl9Bi4" target="_blank">Class&nbsp;2</a> &middot;
+    <a href="https://www.youtube.com/watch?v=4zk-hJ50vmU" target="_blank">Class&nbsp;3</a> &middot;
+    <a href="https://www.youtube.com/watch?v=1-v5ODNx9fM" target="_blank">Class&nbsp;4</a>
+    <br>Companion essays &mdash;
+    <a href="https://apoorv03.com/p/the-economics-of-generative-ai-two" target="_blank">Economics of GenAI</a> &middot;
+    <a href="https://apoorv03.com/p/the-state-of-consumer-ai-part-1-usage" target="_blank">Consumer AI: Usage</a> &middot;
+    <a href="https://apoorv03.com/p/the-state-of-consumer-ai-part-2-engagement" target="_blank">Engagement</a> &middot;
+    <a href="https://apoorv03.com/p/the-state-of-consumer-ai-part-3-time" target="_blank">Time</a>
+  </div>
+
+  </div>
+</div>
+
+<script>
+  function toggleChapter(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+    updateActiveNav();
+  }
+  function scrollToChapter(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function toggleSubCollapse(id) { document.getElementById(id).classList.toggle('open'); }
+
+  /* ── Save as PDF (native print) ── */
+  async function exportPDF() {
+    const btn = document.getElementById('pdfBtn');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '&#9203;&nbsp; Preparing…';
+
+    // expand everything so nothing is hidden in the PDF
+    document.querySelectorAll('.chapter.collapsed').forEach(c => c.classList.remove('collapsed'));
+    document.querySelectorAll('.sub-collapse').forEach(c => c.classList.add('open'));
+
+    // force lazy images to load, then wait for them
+    const imgs = Array.from(document.querySelectorAll('img'));
+    imgs.forEach(i => { i.loading = 'eager'; });
+    try {
+      await Promise.all(imgs.filter(i => !i.complete).map(i => new Promise(res => {
+        i.addEventListener('load', res, { once: true });
+        i.addEventListener('error', res, { once: true });
+        setTimeout(res, 8000); // don't hang forever on a slow image
+      })));
+    } catch (e) { /* print anyway */ }
+
+    btn.innerHTML = original;
+    btn.disabled = false;
+    window.print();
+  }
+
+  // also expand everything if the user prints via Ctrl/Cmd+P
+  window.addEventListener('beforeprint', () => {
+    document.querySelectorAll('.chapter.collapsed').forEach(c => c.classList.remove('collapsed'));
+    document.querySelectorAll('.sub-collapse').forEach(c => c.classList.add('open'));
+  });
+
+  /* ── Sidebar bookmark navigation ── */
+  const navLinks = Array.from(document.querySelectorAll('.sidebar a[href^="#"]'))
+    .map(a => ({ link: a, el: document.getElementById(a.getAttribute('href').slice(1)) }))
+    .filter(t => t.el);
+
+  navLinks.forEach(t => {
+    t.link.addEventListener('click', e => {
+      e.preventDefault();
+      const chapter = t.el.closest('.chapter');
+      if (chapter) chapter.classList.remove('collapsed');
+      t.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + t.el.id);
+    });
+  });
+
+  function updateActiveNav() {
+    let current = null;
+    for (const t of navLinks) {
+      if (t.el.getClientRects().length === 0) continue;
+      if (t.el.getBoundingClientRect().top - 150 <= 0) current = t;
+    }
+    navLinks.forEach(t => t.link.classList.toggle('active', t === current));
+  }
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  window.addEventListener('resize', updateActiveNav);
+  updateActiveNav();
+</script>
+
+</body>
+</html>
