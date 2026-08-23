@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Source-guided study notes on the architecture of the OpenAI Codex coding harness." />
+  <title>How Codex Works — Architecture of a Modern Coding Harness</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #18211d;
+      --muted: #65716b;
+      --line: #dfe6e1;
+      --paper: #ffffff;
+      --wash: #f4f7f5;
+      --green: #157347;
+      --green-soft: #e8f6ee;
+      --blue: #2864b4;
+      --blue-soft: #eaf2fc;
+      --violet: #7150b7;
+      --violet-soft: #f1ecfb;
+      --amber: #a96408;
+      --amber-soft: #fff3dc;
+      --red: #ae3d45;
+      --red-soft: #fcebed;
+      --slate: #44515d;
+      --slate-soft: #edf1f4;
+      --shadow: 0 1px 4px rgba(22, 33, 27, .05), 0 8px 28px rgba(22, 33, 27, .07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(21, 115, 71, .07), transparent 28rem),
+        var(--wash);
+      color: var(--ink);
+      line-height: 1.65;
+      padding: 34px 20px 80px;
+    }
+
+    a { color: var(--green); }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+
+    .page-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: #17231d;
+      color: #fff;
+      border-radius: 20px;
+      padding: 34px 38px 30px;
+      margin-bottom: 24px;
+      box-shadow: 0 18px 46px rgba(18, 35, 26, .18);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      right: -120px;
+      top: -190px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 210, 137, .27), rgba(79, 210, 137, 0));
+    }
+
+    .hero-kicker {
+      position: relative;
+      z-index: 1;
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      color: #8fe2b2;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      font-size: clamp(2rem, 4vw, 3.35rem);
+      line-height: 1.05;
+      letter-spacing: -.035em;
+      margin-bottom: 14px;
+    }
+
+    .hero-summary {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      color: #cbd8d0;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+
+    .hero-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-meta span {
+      border: 1px solid rgba(255, 255, 255, .16);
+      background: rgba(255, 255, 255, .07);
+      border-radius: 999px;
+      padding: 5px 11px;
+      color: #dbe6df;
+      font-size: .76rem;
+      font-weight: 650;
+    }
+
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 26px;
+    }
+
+    .sidebar {
+      flex: 0 0 270px;
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      background: var(--paper);
+      border: 1px solid rgba(217, 226, 220, .9);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .sidebar-title {
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #849089;
+      font-weight: 800;
+      margin-bottom: 11px;
+    }
+
+    .sidebar-actions {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 13px;
+    }
+
+    .sidebar-actions button {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: #f8faf9;
+      color: #536058;
+      border-radius: 7px;
+      padding: 6px 5px;
+      cursor: pointer;
+      font-size: .68rem;
+      font-weight: 700;
+    }
+
+    .sidebar-actions button:hover { border-color: #b9c8bf; color: var(--ink); }
+    .sidebar nav ol { list-style: none; }
+    .sidebar nav > ol > li { margin-bottom: 2px; }
+
+    .sidebar nav a {
+      display: block;
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      color: #5f6b64;
+      padding: 5px 5px 5px 10px;
+      font-size: .78rem;
+      line-height: 1.3;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .sidebar nav a:hover { color: var(--ink); background: #f5f8f6; }
+    .sidebar nav a.active {
+      color: var(--green);
+      border-left-color: var(--green);
+      background: var(--green-soft);
+      font-weight: 750;
+    }
+
+    .container {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .orientation {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .orientation-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(22, 33, 27, .04);
+    }
+
+    .orientation-num {
+      font-size: .68rem;
+      color: var(--green);
+      font-weight: 850;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .orientation-card strong { display: block; font-size: .94rem; margin-bottom: 4px; }
+    .orientation-card p { color: var(--muted); font-size: .82rem; line-height: 1.45; }
+
+    .chapter {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      scroll-margin-top: 18px;
+    }
+
+    .chapter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 19px 22px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chapter-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+    .chapter-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 40px;
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      background: var(--ink);
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 800;
+    }
+
+    .chapter-title { font-weight: 780; font-size: 1.05rem; line-height: 1.25; }
+    .chapter-label {
+      color: #849089;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      font-size: .65rem;
+      font-weight: 780;
+      margin-top: 2px;
+    }
+
+    .chevron { color: #89948e; transition: transform .2s ease; }
+    .chapter.collapsed .chevron { transform: rotate(180deg); }
+    .chapter.collapsed .chapter-body, .chapter.collapsed .chapter-footer { display: none; }
+
+    .chapter-body {
+      border-top: 1px solid #eef2ef;
+      padding: 22px 24px 26px;
+    }
+
+    .chapter-body > p, .chapter-body li { color: #36423b; font-size: .94rem; }
+    .chapter-body > p { margin-bottom: 15px; }
+    .chapter-body h2 {
+      font-size: 1.08rem;
+      margin: 27px 0 10px;
+      scroll-margin-top: 18px;
+    }
+    .chapter-body h3 { font-size: .96rem; margin: 20px 0 8px; }
+    .chapter-body ul, .chapter-body ol { margin: 10px 0 16px 21px; }
+    .chapter-body li { margin: 5px 0; }
+
+    .lead {
+      font-size: 1.02rem !important;
+      color: #26342c !important;
+    }
+
+    .callout {
+      border-left: 4px solid var(--green);
+      background: var(--green-soft);
+      border-radius: 0 9px 9px 0;
+      padding: 13px 15px;
+      margin: 17px 0;
+      color: #2c4737;
+      font-size: .91rem;
+    }
+
+    .callout.blue { border-left-color: var(--blue); background: var(--blue-soft); color: #29486f; }
+    .callout.amber { border-left-color: var(--amber); background: var(--amber-soft); color: #64491f; }
+    .callout.red { border-left-color: var(--red); background: var(--red-soft); color: #6e3439; }
+
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 12px;
+      margin: 15px 0;
+    }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .concept-card {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 14px;
+      background: #fbfcfb;
+    }
+    .concept-card .eyebrow {
+      color: var(--green);
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      font-weight: 850;
+      margin-bottom: 4px;
+    }
+    .concept-card strong { display: block; font-size: .91rem; margin-bottom: 5px; }
+    .concept-card p { color: var(--muted); font-size: .82rem; line-height: 1.48; }
+
+    .diagram-box {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 17px 17px 10px;
+      margin: 18px 0;
+      overflow-x: auto;
+      background: #fcfdfc;
+    }
+
+    .diagram-caption {
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+      font-size: .82rem;
+      margin: 10px 0 2px;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: stretch;
+      gap: 7px;
+      min-width: 720px;
+    }
+
+    .flow-step {
+      flex: 1;
+      border: 1px solid;
+      border-radius: 9px;
+      padding: 10px;
+      text-align: center;
+      font-size: .78rem;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .flow-step small { display: block; margin-top: 3px; font-weight: 500; opacity: .78; }
+    .flow-arrow { align-self: center; color: #8b9690; font-weight: 900; }
+    .tone-green { background: var(--green-soft); border-color: #acd9bf; color: #24583b; }
+    .tone-blue { background: var(--blue-soft); border-color: #b7cfee; color: #284f7f; }
+    .tone-violet { background: var(--violet-soft); border-color: #d2c2ed; color: #533a85; }
+    .tone-amber { background: var(--amber-soft); border-color: #ebcf99; color: #6f4c14; }
+    .tone-red { background: var(--red-soft); border-color: #efc0c4; color: #76343a; }
+    .tone-slate { background: var(--slate-soft); border-color: #cbd4db; color: #3f4f5c; }
+
+    .code-block {
+      position: relative;
+      background: #18211d;
+      color: #d9e5dd;
+      border-radius: 10px;
+      padding: 16px 17px;
+      margin: 15px 0;
+      overflow-x: auto;
+      font-size: .79rem;
+      line-height: 1.58;
+      white-space: pre;
+    }
+
+    .code-block .comment { color: #8eaa9a; }
+    .code-block .keyword { color: #82d9aa; }
+    .code-block .value { color: #f0c87a; }
+
+    .source-trail {
+      margin-top: 20px;
+      border-top: 1px dashed #dce4df;
+      padding-top: 14px;
+    }
+
+    .source-trail-title {
+      color: #7b8780;
+      font-size: .66rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-weight: 850;
+      margin-bottom: 8px;
+    }
+
+    .source-links { display: flex; flex-wrap: wrap; gap: 7px; }
+    .source-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      color: #415249;
+      background: #f5f8f6;
+      border: 1px solid #dce4df;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: .69rem;
+    }
+    .source-link:hover { border-color: #9dc8af; color: var(--green); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: .81rem;
+    }
+    th {
+      text-align: left;
+      color: #526158;
+      background: #f2f6f3;
+      font-size: .69rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    th, td { border: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
+    td { color: #39463f; }
+
+    .invariant {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin: 9px 0;
+    }
+    .invariant-badge {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 850;
+    }
+    .invariant strong { display: block; font-size: .87rem; }
+    .invariant p { color: var(--muted); font-size: .81rem; line-height: 1.45; }
+
+    .chapter-footer {
+      border-top: 1px solid #eef2ef;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #fbfcfb;
+    }
+    .chapter-footer button {
+      border: 0;
+      background: transparent;
+      color: #65716b;
+      cursor: pointer;
+      font-size: .76rem;
+      font-weight: 700;
+    }
+    .chapter-footer button:hover { color: var(--green); }
+
+    .footer-note {
+      color: #758179;
+      text-align: center;
+      font-size: .77rem;
+      padding: 8px 10px 0;
+    }
+
+    @media (max-width: 980px) {
+      body { padding: 18px 12px 55px; }
+      .hero { padding: 28px 24px; }
+      .layout { flex-direction: column; gap: 16px; }
+      .sidebar { position: static; width: 100%; max-height: none; flex: none; }
+      .sidebar nav ol { columns: 2; column-gap: 18px; }
+      .sidebar nav li { break-inside: avoid; }
+      .orientation { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .sidebar nav ol { columns: 1; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .chapter-header { padding: 16px; }
+      .chapter-body { padding: 18px 16px 22px; }
+      .chapter-num { width: 35px; height: 35px; flex-basis: 35px; }
+      .hero h1 { font-size: 2rem; }
+      th, td { padding: 7px; }
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .hero { box-shadow: none; border-radius: 0; }
+      .layout { display: block; }
+      .sidebar, .chapter-footer { display: none; }
+      .chapter { box-shadow: none; break-inside: avoid; margin-bottom: 12px; }
+      .chapter.collapsed .chapter-body { display: block; }
+      .chevron { display: none; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-kicker">Source-guided architecture study</div>
+      <h1>How Codex Works</h1>
+      <p class="hero-summary">
+        A practical tour of a modern coding harness: how user intent becomes model context,
+        how models discover and invoke tools, how side effects are authorized and sandboxed,
+        and how the whole interaction remains streamable, resumable, extensible, and testable.
+      </p>
+      <div class="hero-meta">
+        <span>OpenAI Codex repository</span>
+        <span>Rust implementation</span>
+        <span>Responses API</span>
+        <span>Source snapshot: August 21, 2026</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-title">Contents</div>
+        <div class="sidebar-actions">
+          <button type="button" onclick="setAllChapters(false)">Expand all</button>
+          <button type="button" onclick="setAllChapters(true)">Collapse all</button>
+        </div>
+        <nav aria-label="Tutorial chapters">
+          <ol>
+            <li><a href="#ch0">0. Vocabulary</a></li>
+            <li><a href="#ch1">1. System architecture</a></li>
+            <li><a href="#ch2">2. One turn end to end</a></li>
+            <li><a href="#ch3">3. Session, turn, step</a></li>
+            <li><a href="#ch4">4. Context engineering</a></li>
+            <li><a href="#ch5">5. The model plane</a></li>
+            <li><a href="#ch6">6. Tool control plane</a></li>
+            <li><a href="#ch7">7. Tool data plane</a></li>
+            <li><a href="#ch8">8. Safety and execution</a></li>
+            <li><a href="#ch9">9. Streaming and UX</a></li>
+            <li><a href="#ch10">10. Persistence and compaction</a></li>
+            <li><a href="#ch11">11. Extension systems</a></li>
+            <li><a href="#ch12">12. Concurrency and subagents</a></li>
+            <li><a href="#ch13">13. Reliability and testing</a></li>
+            <li><a href="#ch14">14. Build the minimal harness</a></li>
+          </ol>
+        </nav>
+      </aside>
+
+      <main class="container">
+        <section class="orientation" aria-label="Learning goals">
+          <div class="orientation-card">
+            <div class="orientation-num">Question 1</div>
+            <strong>What is the harness?</strong>
+            <p>The stateful system around the model: context, tools, policy, events, storage, and execution.</p>
+          </div>
+          <div class="orientation-card">
+            <div class="orientation-num">Question 2</div>
+            <strong>Who decides what happens?</strong>
+            <p>The harness decides capabilities and authority; the model chooses among advertised actions.</p>
+          </div>
+          <div class="orientation-card">
+            <div class="orientation-num">Question 3</div>
+            <strong>What makes it production-grade?</strong>
+            <p>Explicit lifetimes, bounded state, structured events, sandboxing, retries, persistence, and tests.</p>
+          </div>
+        </section>
+
+        <section class="chapter" id="ch0">
+          <div class="chapter-header" onclick="toggleChapter('ch0')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">0</div>
+              <div>
+                <div class="chapter-title">Vocabulary: the objects you must keep separate</div>
+                <div class="chapter-label">Mental model before code</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Most confusion comes from treating “the agent” as one thing. In Codex it is a set of
+              objects with different lifetimes and responsibilities.
+            </p>
+            <div class="grid-3">
+              <div class="concept-card"><div class="eyebrow">Durable</div><strong>Thread</strong><p>A conversation identity that can be started, resumed, forked, archived, and persisted.</p></div>
+              <div class="concept-card"><div class="eyebrow">User unit</div><strong>Turn</strong><p>Work initiated by user input and completed with a final state, usage, and zero or more items.</p></div>
+              <div class="concept-card"><div class="eyebrow">Stream unit</div><strong>Item</strong><p>A message, reasoning item, command, patch, tool call, tool result, or other observable artifact.</p></div>
+              <div class="concept-card"><div class="eyebrow">Inference unit</div><strong>Model cycle <small>(sampling step)</small></strong><p>One complete request to the model and its streamed response. It may return final text or request one or more tools.</p></div>
+              <div class="concept-card"><div class="eyebrow">Capability</div><strong>Tool</strong><p>A schema shown to the model plus a runtime that can validate and execute the call.</p></div>
+              <div class="concept-card"><div class="eyebrow">Execution</div><strong>Environment</strong><p>The local or remote filesystem, process runtime, cwd, shell, workspace roots, and permissions.</p></div>
+              <div class="concept-card"><div class="eyebrow">Model input</div><strong>Context</strong><p>Base instructions, durable history, current world state, user input, and tool outputs.</p></div>
+              <div class="concept-card"><div class="eyebrow">Storage</div><strong>Rollout</strong><p>An append-oriented record used to reconstruct, inspect, resume, and migrate a thread.</p></div>
+              <div class="concept-card"><div class="eyebrow">Backend</div><strong>Provider</strong><p>Authentication, endpoint configuration, transport capabilities, model catalog, and error mapping.</p></div>
+            </div>
+            <div class="callout blue">
+              <strong>“Sampling” does not mean one token.</strong> In harness code it means asking
+              the model what to do next: send the current context and tool definitions, then stream
+              one model response. Mentally substitute <strong>model cycle</strong> whenever you see
+              <em>sample</em> or <em>sampling step</em> in this tutorial.
+            </div>
+            <div class="diagram-box">
+              <div class="flow-row">
+                <div class="flow-step tone-blue">User request<small>“What files changed?”</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-violet">Model cycle #1<small>Returns a request to run <code>git status</code></small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-amber">Harness executes tool<small>Appends command output to context</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-violet">Model cycle #2<small>Reads the result and returns an answer</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-green">Turn complete<small>One turn, two model cycles</small></div>
+              </div>
+              <div class="diagram-caption">The model requests actions; the harness executes them. New tool results require another model cycle.</div>
+            </div>
+            <div class="callout amber">
+              Older protocol notes use “Task” and “Turn” somewhat differently from the current
+              app-server API. Use them for intuition, but treat current v2 Thread → Turn → Item types
+              and the code as authoritative.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md#core-primitives">app-server/README.md</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/docs/protocol_v1.md">docs/protocol_v1.md</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/protocol/src/protocol.rs">protocol/src/protocol.rs</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch0')">⌃ Collapse</button><button onclick="goTo('ch1')">Next: architecture →</button></div>
+        </section>
+
+        <section class="chapter" id="ch1">
+          <div class="chapter-header" onclick="toggleChapter('ch1')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">1</div>
+              <div>
+                <div class="chapter-title">System architecture: six layers around a loop</div>
+                <div class="chapter-label">The map of the repository</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              The core loop is small. The production architecture exists to feed that loop correct
+              state, constrain its authority, expose its progress, and preserve its results.
+            </p>
+            <div class="callout blue">
+              In the loop below, <strong>model cycle</strong> means exactly one API request plus its
+              streamed response. If that response requests a tool, the harness executes the tool,
+              adds its result to context, and starts another model cycle. The loop stops when the
+              model produces a final response with no follow-up action.
+            </div>
+            <div class="diagram-box">
+              <svg viewBox="0 0 920 610" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:760px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <defs>
+                  <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#718078"/></marker>
+                </defs>
+                <text x="24" y="25" font-size="12" font-weight="800" fill="#536158" letter-spacing=".08em">CODEX AS A LAYERED HARNESS</text>
+
+                <rect x="30" y="48" width="860" height="64" rx="11" fill="#eaf2fc" stroke="#91b3df"/>
+                <text x="52" y="75" font-size="15" font-weight="800" fill="#284f7f">1 · User surfaces</text>
+                <text x="52" y="96" font-size="12" fill="#48698f">TUI · non-interactive exec · app-server · MCP server · TypeScript/Python SDKs</text>
+
+                <line x1="460" y1="112" x2="460" y2="139" stroke="#718078" stroke-width="1.5" marker-end="url(#a1)"/>
+                <text x="470" y="130" font-size="10" fill="#718078">operations ↓  events ↑</text>
+
+                <rect x="30" y="145" width="860" height="78" rx="11" fill="#e8f6ee" stroke="#8ec9a8"/>
+                <text x="52" y="174" font-size="15" font-weight="800" fill="#24583b">2 · Session and turn orchestration</text>
+                <text x="52" y="195" font-size="12" fill="#466e57">ThreadManager · CodexThread · Session · submission loop · SessionTask · cancellation</text>
+                <text x="52" y="211" font-size="11" fill="#658070">Owns lifecycle, mutable state, queues, steering, and turn completion.</text>
+
+                <line x1="460" y1="223" x2="460" y2="249" stroke="#718078" stroke-width="1.5" marker-end="url(#a1)"/>
+
+                <rect x="30" y="255" width="410" height="112" rx="11" fill="#f1ecfb" stroke="#bba6df"/>
+                <text x="52" y="283" font-size="15" font-weight="800" fill="#533a85">3 · Context and model plane</text>
+                <text x="52" y="305" font-size="12" fill="#695393">ContextManager · WorldState · StepContext</text>
+                <text x="52" y="324" font-size="12" fill="#695393">ModelsManager · ModelProvider · ModelClientSession</text>
+                <text x="52" y="348" font-size="11" fill="#75668b">Builds the prompt and streams Responses events.</text>
+
+                <rect x="480" y="255" width="410" height="112" rx="11" fill="#fff3dc" stroke="#dfbd78"/>
+                <text x="502" y="283" font-size="15" font-weight="800" fill="#6f4c14">4 · Tool control and data planes</text>
+                <text x="502" y="305" font-size="12" fill="#7a5b2b">ToolSpec · ToolRegistry · ToolRouter · handlers</text>
+                <text x="502" y="324" font-size="12" fill="#7a5b2b">built-ins · MCP · extensions · dynamic tools</text>
+                <text x="502" y="348" font-size="11" fill="#806d4d">Advertises, validates, schedules, and dispatches actions.</text>
+
+                <line x1="235" y1="367" x2="235" y2="394" stroke="#718078" stroke-width="1.5" marker-end="url(#a1)"/>
+                <line x1="685" y1="367" x2="685" y2="394" stroke="#718078" stroke-width="1.5" marker-end="url(#a1)"/>
+
+                <rect x="30" y="400" width="410" height="90" rx="11" fill="#fcebed" stroke="#df9da2"/>
+                <text x="52" y="429" font-size="15" font-weight="800" fill="#76343a">5 · Execution and authority</text>
+                <text x="52" y="450" font-size="12" fill="#815159">approvals · exec policy · hooks · sandboxing</text>
+                <text x="52" y="469" font-size="12" fill="#815159">PTY/process manager · apply_patch · remote exec</text>
+
+                <rect x="480" y="400" width="410" height="90" rx="11" fill="#edf1f4" stroke="#adb9c2"/>
+                <text x="502" y="429" font-size="15" font-weight="800" fill="#3f4f5c">6 · Durable state and observability</text>
+                <text x="502" y="450" font-size="12" fill="#566774">rollouts · thread store · state DB · compaction</text>
+                <text x="502" y="469" font-size="12" fill="#566774">protocol events · tracing · telemetry · analytics</text>
+
+                <rect x="176" y="530" width="568" height="48" rx="24" fill="#17231d"/>
+                <text x="460" y="551" text-anchor="middle" font-size="12" font-weight="800" fill="#8fe2b2">THE REPEATING LOOP</text>
+                <text x="460" y="568" text-anchor="middle" font-size="12" fill="#d9e5dd">context → model cycle → tool request? → execute + append result → repeat or finish</text>
+              </svg>
+              <div class="diagram-caption">The model loop sits inside a larger operating envelope; most repository code implements that envelope.</div>
+            </div>
+
+            <table>
+              <thead><tr><th>Area</th><th>Representative crates</th><th>What to learn</th></tr></thead>
+              <tbody>
+                <tr><td>User surfaces</td><td><code>cli</code>, <code>tui</code>, <code>exec</code>, <code>app-server</code></td><td>Different clients can drive the same core.</td></tr>
+                <tr><td>Core</td><td><code>core</code>, <code>protocol</code>, <code>context-fragments</code></td><td>Lifecycle, state, history, events, and the repeated model-call loop.</td></tr>
+                <tr><td>Models</td><td><code>model-provider</code>, <code>models-manager</code>, <code>codex-api</code></td><td>Separate catalog policy from transport and authentication.</td></tr>
+                <tr><td>Tools</td><td><code>tools</code>, <code>codex-mcp</code>, <code>code-mode</code></td><td>Separate advertised schemas from executable runtimes.</td></tr>
+                <tr><td>Execution</td><td><code>exec-server</code>, <code>sandboxing</code>, <code>linux-sandbox</code></td><td>Authority belongs below the model.</td></tr>
+                <tr><td>Storage</td><td><code>rollout</code>, <code>thread-store</code>, <code>state</code></td><td>A chat transcript is also a recovery log.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="callout">
+              A coding harness is best understood as a small workflow engine whose planner happens
+              to be an LLM. It has queues, state snapshots, capabilities, effect handlers, policy,
+              persistence, and observability like any other workflow runtime.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/cli/src/main.rs">cli/src/main.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/lib.rs">core/src/lib.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md#lifecycle-overview">app-server lifecycle</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch1')">⌃ Collapse</button><button onclick="goTo('ch2')">Next: trace a turn →</button></div>
+        </section>
+
+        <section class="chapter" id="ch2">
+          <div class="chapter-header" onclick="toggleChapter('ch2')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">2</div>
+              <div>
+                <div class="chapter-title">One user turn, end to end</div>
+                <div class="chapter-label">The golden path through the code</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Start with one concrete scenario: “run the failing test and fix it.” The model needs
+              multiple model cycles (called sampling steps in the code): one to request a command,
+              then another after each new tool result until it can give a final response.
+            </p>
+
+            <div class="diagram-box">
+              <svg viewBox="0 0 980 670" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:800px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <defs>
+                  <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6d7972"/></marker>
+                </defs>
+                <text x="65" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#284f7f">CLIENT</text>
+                <text x="265" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#24583b">SESSION</text>
+                <text x="490" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#533a85">TURN LOOP</text>
+                <text x="710" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#6f4c14">TOOLS</text>
+                <text x="910" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#76343a">MODEL</text>
+                <g stroke="#d9e1dc" stroke-dasharray="4 4">
+                  <line x1="65" y1="40" x2="65" y2="645"/><line x1="265" y1="40" x2="265" y2="645"/>
+                  <line x1="490" y1="40" x2="490" y2="645"/><line x1="710" y1="40" x2="710" y2="645"/>
+                  <line x1="910" y1="40" x2="910" y2="645"/>
+                </g>
+
+                <line x1="65" y1="72" x2="255" y2="72" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="160" y="63" text-anchor="middle" font-size="10" fill="#4c5952">turn/start + input + overrides</text>
+                <rect x="205" y="84" width="120" height="38" rx="7" fill="#e8f6ee" stroke="#8ec9a8"/>
+                <text x="265" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#24583b">queue Submission</text>
+                <text x="265" y="114" text-anchor="middle" font-size="9" fill="#526d5d">start or steer</text>
+
+                <line x1="265" y1="138" x2="480" y2="138" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="372" y="129" text-anchor="middle" font-size="10" fill="#4c5952">RegularTask.run</text>
+                <rect x="422" y="151" width="136" height="52" rx="7" fill="#f1ecfb" stroke="#bba6df"/>
+                <text x="490" y="170" text-anchor="middle" font-size="10" font-weight="700" fill="#533a85">capture StepContext</text>
+                <text x="490" y="186" text-anchor="middle" font-size="9" fill="#6b568e">history · tools · world state</text>
+
+                <line x1="500" y1="220" x2="900" y2="220" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="700" y="210" text-anchor="middle" font-size="10" fill="#4c5952">model cycle #1: prompt + tool schemas</text>
+                <line x1="900" y1="262" x2="500" y2="262" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="700" y="252" text-anchor="middle" font-size="10" fill="#4c5952">stream: reasoning + exec_command call</text>
+
+                <line x1="500" y1="304" x2="700" y2="304" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="600" y="294" text-anchor="middle" font-size="10" fill="#4c5952">route canonical tool name</text>
+                <rect x="642" y="316" width="136" height="70" rx="7" fill="#fff3dc" stroke="#dfbd78"/>
+                <text x="710" y="335" text-anchor="middle" font-size="10" font-weight="700" fill="#6f4c14">policy + hooks</text>
+                <text x="710" y="351" text-anchor="middle" font-size="9" fill="#745b34">approval if required</text>
+                <text x="710" y="366" text-anchor="middle" font-size="9" fill="#745b34">sandbox + execute</text>
+                <text x="710" y="380" text-anchor="middle" font-size="9" fill="#745b34">capture bounded output</text>
+
+                <line x1="700" y1="404" x2="500" y2="404" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="600" y="394" text-anchor="middle" font-size="10" fill="#4c5952">FunctionCallOutput</text>
+                <rect x="422" y="418" width="136" height="47" rx="7" fill="#edf1f4" stroke="#adb9c2"/>
+                <text x="490" y="437" text-anchor="middle" font-size="10" font-weight="700" fill="#3f4f5c">record + persist</text>
+                <text x="490" y="453" text-anchor="middle" font-size="9" fill="#596873">history now includes stdout</text>
+
+                <line x1="500" y1="492" x2="900" y2="492" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="700" y="482" text-anchor="middle" font-size="10" fill="#4c5952">model cycle #2: context now includes tool output</text>
+                <line x1="900" y1="534" x2="500" y2="534" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="700" y="524" text-anchor="middle" font-size="10" fill="#4c5952">stream: final assistant message</text>
+
+                <line x1="480" y1="574" x2="75" y2="574" stroke="#6d7972" marker-end="url(#a2)"/>
+                <text x="278" y="564" text-anchor="middle" font-size="10" fill="#4c5952">item deltas + item completed + turn completed</text>
+                <rect x="200" y="596" width="580" height="40" rx="20" fill="#17231d"/>
+                <text x="490" y="621" text-anchor="middle" font-size="11" font-weight="700" fill="#d9e5dd">No follow-up tool call + no pending input → the turn is complete</text>
+              </svg>
+              <div class="diagram-caption">A “turn” is a loop of model cycles and tool observations, not necessarily one model request.</div>
+            </div>
+
+            <ol>
+              <li>The app-server maps v2 request fields into a core <code>TurnInputRequest</code>.</li>
+              <li><code>CodexThread</code> sends an operation into the session submission channel.</li>
+              <li>The submission loop routes the operation and starts a regular session task.</li>
+              <li><code>run_turn</code> captures current state, records input, and enters the repeated model-cycle loop (called the sampling loop in code).</li>
+              <li>The stream processor records every completed response item immediately.</li>
+              <li>A tool call creates an execution future and marks the current model cycle as needing follow-up.</li>
+              <li>Tool outputs are appended to history in call order, then a new model cycle begins.</li>
+              <li>An assistant response with no follow-up work ends the turn.</li>
+            </ol>
+
+            <div class="code-block"><span class="comment">// Conceptual shape of core/src/session/turn.rs</span>
+<span class="keyword">loop</span> {
+    step = capture_step_context();
+    prompt = history.for_prompt() + step.visible_tools();
+    response = model.stream(prompt);
+
+    <span class="keyword">for</span> item <span class="keyword">in</span> response.completed_items {
+        record(item);
+        <span class="keyword">if</span> item.is_tool_call() {
+            outputs.push(execute(item));
+            needs_follow_up = <span class="value">true</span>;
+        }
+    }
+
+    record(await_all(outputs));
+    <span class="keyword">if</span> !needs_follow_up &amp;&amp; !pending_user_input { <span class="keyword">break</span>; }
+}</div>
+
+            <div class="callout blue">
+              Immediate recording is an important reliability choice: if cancellation arrives while
+              tools are still running, history and the rollout already agree about what the model emitted.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Golden source trail</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/app-server/src/request_processors/turn_processor.rs#L554">turn_processor.rs:554</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/codex_thread.rs#L247">codex_thread.rs:247</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/handlers.rs#L515">session/handlers.rs:515</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tasks/regular.rs#L30">tasks/regular.rs:30</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn.rs#L153">session/turn.rs:153</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch2')">⌃ Collapse</button><button onclick="goTo('ch3')">Next: lifetimes →</button></div>
+        </section>
+
+        <section class="chapter" id="ch3">
+          <div class="chapter-header" onclick="toggleChapter('ch3')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">3</div>
+              <div>
+                <div class="chapter-title">Session, turn, step, call: explicit lifetimes</div>
+                <div class="chapter-label">Preventing stale state and cross-turn leakage</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Codex makes changing state explicit by placing it in progressively shorter-lived
+              containers. This is one of the strongest architectural patterns in the repository.
+            </p>
+            <div class="diagram-box">
+              <svg viewBox="0 0 880 390" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:700px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <rect x="30" y="30" width="820" height="325" rx="18" fill="#edf1f4" stroke="#9eabb5" stroke-width="1.5"/>
+                <text x="52" y="59" font-size="15" font-weight="800" fill="#3f4f5c">SESSION · thread lifetime</text>
+                <text x="52" y="80" font-size="11" fill="#596873">provider · auth · durable history · services · queues · persistence · transport fallback state</text>
+
+                <rect x="75" y="102" width="730" height="220" rx="16" fill="#e8f6ee" stroke="#86c39f" stroke-width="1.5"/>
+                <text x="97" y="130" font-size="14" font-weight="800" fill="#24583b">TURN · one user-initiated unit of work</text>
+                <text x="97" y="150" font-size="11" fill="#526d5d">model · reasoning effort · collaboration mode · permissions · environments · cancellation</text>
+
+                <rect x="125" y="175" width="630" height="116" rx="14" fill="#f1ecfb" stroke="#b6a0dc" stroke-width="1.5"/>
+                <text x="147" y="202" font-size="13" font-weight="800" fill="#533a85">STEP · one model sampling request</text>
+                <text x="147" y="222" font-size="11" fill="#695393">exact MCP binding · tool router · AGENTS.md · environment readiness · world state</text>
+
+                <rect x="190" y="244" width="500" height="30" rx="15" fill="#fff3dc" stroke="#dcb871"/>
+                <text x="440" y="264" text-anchor="middle" font-size="11" font-weight="750" fill="#6f4c14">TOOL CALL · invocation payload + call id + runtime + cancellation</text>
+              </svg>
+              <div class="diagram-caption">Shorter-lived state may depend on longer-lived state; the reverse dependency is dangerous.</div>
+            </div>
+
+            <div class="grid-2">
+              <div class="concept-card"><div class="eyebrow">Why session scope?</div><strong>Transport and durable identity</strong><p>Authentication, thread identity, persistent history, and WebSocket fallback must survive multiple user turns.</p></div>
+              <div class="concept-card"><div class="eyebrow">Why turn scope?</div><strong>User-visible consistency</strong><p>A model override, cwd, reasoning effort, permissions profile, and cancellation boundary belong to one unit of work.</p></div>
+              <div class="concept-card"><div class="eyebrow">Why step scope?</div><strong>Atomic capability view</strong><p>MCP readiness, AGENTS.md, selected roots, and tool exposure may change between model samples.</p></div>
+              <div class="concept-card"><div class="eyebrow">Why call scope?</div><strong>Precise execution accounting</strong><p>Each call needs its own id, payload, lifecycle events, cancellation, telemetry, and tool result.</p></div>
+            </div>
+
+            <div class="callout">
+              The model must execute against the same tool plan it saw. <code>ToolCallRuntime</code>
+              retains the originating <code>StepContext</code>, so a later MCP refresh cannot silently
+              redirect an already-advertised call to a different runtime.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/step_context.rs">session/step_context.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn_context.rs">session/turn_context.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/parallel.rs#L41">tools/parallel.rs:41</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/client.rs#L275">ModelClientSession</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch3')">⌃ Collapse</button><button onclick="goTo('ch4')">Next: context →</button></div>
+        </section>
+
+        <section class="chapter" id="ch4">
+          <div class="chapter-header" onclick="toggleChapter('ch4')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">4</div>
+              <div>
+                <div class="chapter-title">Context engineering: the harness’s real product</div>
+                <div class="chapter-label">History + world state + instructions</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              The harness does not concatenate a few strings and call an API. It maintains a typed,
+              ordered transcript and incrementally projects changing runtime state into model-visible items.
+            </p>
+
+            <div class="diagram-box">
+              <div class="flow-row">
+                <div class="flow-step tone-slate">Base instructions<small>model template · personality</small></div>
+                <div class="flow-arrow">+</div>
+                <div class="flow-step tone-violet">World state<small>permissions · cwd · AGENTS.md</small></div>
+                <div class="flow-arrow">+</div>
+                <div class="flow-step tone-blue">Thread history<small>messages · calls · outputs</small></div>
+                <div class="flow-arrow">+</div>
+                <div class="flow-step tone-green">Turn injection<small>skills · plugins · user input</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-red">Model request<small>normalized for modalities</small></div>
+              </div>
+              <div class="diagram-caption">Different context sources have different ownership and update rules.</div>
+            </div>
+
+            <h2>World state is diffed, not constantly rewritten</h2>
+            <p>
+              Codex models changing state—model instructions, personality, AGENTS.md, permissions,
+              environment, apps, plugins, deferred tools, collaboration mode—as structured world-state
+              sections. The first real turn receives a full injection. Later turns receive only rendered
+              differences plus a persisted snapshot or merge patch.
+            </p>
+
+            <div class="grid-3">
+              <div class="concept-card"><div class="eyebrow">Stable prefix</div><strong>Cache-friendly history</strong><p>Incremental additions preserve request prefixes and improve provider-side prompt caching.</p></div>
+              <div class="concept-card"><div class="eyebrow">Typed fragment</div><strong>Bounded context source</strong><p>Each injected concept has a dedicated representation and rendering contract.</p></div>
+              <div class="concept-card"><div class="eyebrow">Normalization</div><strong>Valid request history</strong><p>Call/output pairing, unsupported modalities, ids, and oversized outputs are normalized before sampling.</p></div>
+            </div>
+
+            <h2>Context invariants</h2>
+            <div class="invariant"><div class="invariant-badge">1</div><div><strong>Append by default</strong><p>Do not rewrite prior history just because current state changed; append a delta.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">2</div><div><strong>Bound every fragment</strong><p>Tool outputs, files, instructions, images, and summaries need explicit size limits.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">3</div><div><strong>Persist after projection</strong><p>Record model-visible context before persisting the snapshot that claims it exists.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">4</div><div><strong>Reinject after history replacement</strong><p>Compaction and rollback can invalidate baselines; the next window may need full context.</p></div></div>
+
+            <div class="callout amber">
+              Context compaction is not “delete old messages.” It replaces history with a semantically
+              sufficient representation, restores world-state baselines, and preserves enough metadata
+              to resume correctly.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/context_manager/history.rs#L45">context_manager/history.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/world_state.rs#L34">session/world_state.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/context/world_state">context/world_state/</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/mod.rs#L3870">record context updates</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch4')">⌃ Collapse</button><button onclick="goTo('ch5')">Next: model plane →</button></div>
+        </section>
+
+        <section class="chapter" id="ch5">
+          <div class="chapter-header" onclick="toggleChapter('ch5')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">5</div>
+              <div>
+                <div class="chapter-title">The model plane: selection, metadata, and transport</div>
+                <div class="chapter-label">How a model becomes a concrete request</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              “Choose model X” is only the first input. Codex resolves a provider, catalog entry,
+              capability metadata, reasoning controls, request encoding, auth, and transport.
+            </p>
+
+            <div class="diagram-box">
+              <div class="flow-row">
+                <div class="flow-step tone-slate">Config layers<small>managed · CLI · project · user</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-green">ModelsManager<small>catalog · cache · default · metadata</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-violet">TurnContext<small>model info · effort · service tier</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-blue">ModelClientSession<small>request · auth · sticky state</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-red">Responses stream<small>WebSocket or HTTP/SSE</small></div>
+              </div>
+              <div class="diagram-caption">Selection policy, model metadata, provider behavior, and transport are separate concerns.</div>
+            </div>
+
+            <h2>Four cooperating abstractions</h2>
+            <table>
+              <thead><tr><th>Abstraction</th><th>Owns</th><th>Does not own</th></tr></thead>
+              <tbody>
+                <tr><td><code>ConfigLayerStack</code></td><td>Precedence, effective values, per-key origins</td><td>Model endpoint behavior</td></tr>
+                <tr><td><code>ModelsManager</code></td><td>Catalog refresh/cache, defaults, metadata lookup</td><td>Streaming inference</td></tr>
+                <tr><td><code>ModelProvider</code></td><td>Auth, API provider, capabilities, error mapping</td><td>Conversation history</td></tr>
+                <tr><td><code>ModelClientSession</code></td><td>Turn-scoped stream transport, sticky routing, incremental request state</td><td>Which tools are safe to expose</td></tr>
+              </tbody>
+            </table>
+
+            <h2>Model metadata changes harness behavior</h2>
+            <p>
+              A model catalog entry can influence context window and compaction thresholds, supported
+              reasoning efforts, input modalities, shell and patch tool shapes, namespace and search
+              support, personality instructions, verbosity, Responses Lite encoding, and multi-agent behavior.
+            </p>
+
+            <div class="callout blue">
+              The transport session is turn-scoped because sticky-routing state must be reused within
+              a turn but never leaked into the next turn. The broader client is session-scoped so auth,
+              provider selection, and a permanent WebSocket→HTTP fallback can survive across turns.
+            </div>
+
+            <h2>Why incremental WebSocket requests matter</h2>
+            <p>
+              When request properties are unchanged and the new transcript strictly extends the previous
+              request plus response items, Codex can send only the delta with a previous response id.
+              This turns careful context ordering into a latency and bandwidth optimization.
+            </p>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/config/src/loader/README.md">config loader README</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/models-manager/src/manager.rs#L159">models-manager/manager.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/model-provider/src/provider.rs#L141">model-provider/provider.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/client.rs#L867">build Responses request</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/client.rs#L1883">stream transport</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch5')">⌃ Collapse</button><button onclick="goTo('ch6')">Next: tool control →</button></div>
+        </section>
+
+        <section class="chapter" id="ch6">
+          <div class="chapter-header" onclick="toggleChapter('ch6')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">6</div>
+              <div>
+                <div class="chapter-title">The tool control plane: what the model is allowed to see</div>
+                <div class="chapter-label">Capability planning before execution</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Tool selection starts before inference. Codex builds a per-step registry of executable
+              runtimes, applies exposure policy, and derives the exact schemas advertised to the model.
+            </p>
+
+            <div class="diagram-box">
+              <svg viewBox="0 0 930 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:760px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#738078"/></marker></defs>
+                <text x="25" y="25" font-size="12" font-weight="800" fill="#536158" letter-spacing=".08em">TOOL ELIGIBILITY FUNNEL</text>
+                <g font-size="11" text-anchor="middle">
+                  <rect x="25" y="50" width="150" height="52" rx="8" fill="#e8f6ee" stroke="#8ec9a8"/><text x="100" y="72" font-weight="800" fill="#24583b">Core tools</text><text x="100" y="89" fill="#526d5d">exec · patch · plan</text>
+                  <rect x="202" y="50" width="150" height="52" rx="8" fill="#eaf2fc" stroke="#91b3df"/><text x="277" y="72" font-weight="800" fill="#284f7f">MCP tools</text><text x="277" y="89" fill="#48698f">servers · resources</text>
+                  <rect x="379" y="50" width="150" height="52" rx="8" fill="#f1ecfb" stroke="#bba6df"/><text x="454" y="72" font-weight="800" fill="#533a85">Extensions</text><text x="454" y="89" fill="#695393">plugins · apps</text>
+                  <rect x="556" y="50" width="150" height="52" rx="8" fill="#fff3dc" stroke="#dfbd78"/><text x="631" y="72" font-weight="800" fill="#6f4c14">Dynamic tools</text><text x="631" y="89" fill="#7a5b2b">thread-defined</text>
+                  <rect x="733" y="50" width="170" height="52" rx="8" fill="#fcebed" stroke="#df9da2"/><text x="818" y="72" font-weight="800" fill="#76343a">Hosted tools</text><text x="818" y="89" fill="#815159">provider web search</text>
+                </g>
+                <line x1="100" y1="102" x2="290" y2="148" stroke="#738078"/><line x1="277" y1="102" x2="350" y2="148" stroke="#738078"/>
+                <line x1="454" y1="102" x2="430" y2="148" stroke="#738078"/><line x1="631" y1="102" x2="520" y2="148" stroke="#738078"/>
+                <line x1="818" y1="102" x2="600" y2="148" stroke="#738078"/>
+                <polygon points="260,148 640,148 570,220 330,220" fill="#edf1f4" stroke="#adb9c2"/>
+                <text x="450" y="174" text-anchor="middle" font-size="12" font-weight="800" fill="#3f4f5c">Registration + collision rules</text>
+                <text x="450" y="195" text-anchor="middle" font-size="10" fill="#596873">trusted vs external · reserved names · canonical namespaces</text>
+
+                <polygon points="330,238 570,238 535,298 365,298" fill="#fff3dc" stroke="#dfbd78"/>
+                <text x="450" y="262" text-anchor="middle" font-size="12" font-weight="800" fill="#6f4c14">Exposure policy</text>
+                <text x="450" y="281" text-anchor="middle" font-size="10" fill="#7a5b2b">direct · deferred · code mode · hidden</text>
+                <line x1="450" y1="220" x2="450" y2="235" stroke="#738078" marker-end="url(#a6)"/>
+
+                <polygon points="365,316 535,316 505,366 395,366" fill="#f1ecfb" stroke="#bba6df"/>
+                <text x="450" y="339" text-anchor="middle" font-size="11" font-weight="800" fill="#533a85">Provider + model encoding</text>
+                <text x="450" y="355" text-anchor="middle" font-size="9" fill="#695393">namespaces · Responses Lite</text>
+                <line x1="450" y1="298" x2="450" y2="313" stroke="#738078" marker-end="url(#a6)"/>
+
+                <rect x="355" y="385" width="190" height="32" rx="16" fill="#17231d"/>
+                <text x="450" y="406" text-anchor="middle" font-size="11" font-weight="800" fill="#8fe2b2">MODEL-VISIBLE TOOL SPECS</text>
+                <line x1="450" y1="366" x2="450" y2="382" stroke="#738078" marker-end="url(#a6)"/>
+              </svg>
+              <div class="diagram-caption">A runtime can exist without being directly visible to the model.</div>
+            </div>
+
+            <h2>The two halves of a tool</h2>
+            <div class="grid-2">
+              <div class="concept-card"><div class="eyebrow">Control plane</div><strong><code>ToolSpec</code></strong><p>Name, namespace, description, argument schema, output schema, and provider wire representation.</p></div>
+              <div class="concept-card"><div class="eyebrow">Data plane</div><strong><code>ToolExecutor</code> / runtime</strong><p>Argument parsing, readiness, parallelism support, hooks, lifecycle events, execution, and result conversion.</p></div>
+            </div>
+
+            <h2>What determines availability?</h2>
+            <ul>
+              <li>Does the turn have an execution environment?</li>
+              <li>Are the relevant feature flags enabled?</li>
+              <li>Does the model support the tool’s wire shape?</li>
+              <li>Does the provider support namespaces, hosted search, or image generation?</li>
+              <li>Is this a root agent, subagent, or restricted guardian reviewer?</li>
+              <li>Are MCP servers ready, and were their capabilities selected?</li>
+              <li>Should the tool be direct, deferred behind search, code-mode-only, or hidden?</li>
+              <li>Did an external tool collide with a trusted or reserved name?</li>
+            </ul>
+
+            <div class="callout">
+              The harness chooses the menu; the model chooses an item from the menu. The model cannot
+              grant itself a tool that was not advertised, and the registry still validates any returned name.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/spec_plan.rs#L117">build_tool_router</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/spec_plan.rs#L314">finalize_tool_router</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/spec_plan.rs#L889">add core sources</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/registry.rs">tools/registry.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/tools/src/lib.rs">codex-tools</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch6')">⌃ Collapse</button><button onclick="goTo('ch7')">Next: tool execution →</button></div>
+        </section>
+
+        <section class="chapter" id="ch7">
+          <div class="chapter-header" onclick="toggleChapter('ch7')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">7</div>
+              <div>
+                <div class="chapter-title">The tool data plane: from response item to observation</div>
+                <div class="chapter-label">Routing, execution, and follow-up</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Once the model emits a completed tool item, Codex converts it into a canonical call,
+              schedules it, runs shared lifecycle policy, invokes a handler, and turns the result
+              back into a Responses input item.
+            </p>
+
+            <div class="diagram-box">
+              <div class="flow-row">
+                <div class="flow-step tone-red">ResponseItem<small>function/custom/search call</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-violet">ToolCall<small>canonical name · call id · payload</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-amber">Parallel gate<small>read lock or exclusive write lock</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-green">Registry dispatch<small>hooks · telemetry · handler</small></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step tone-blue">ResponseInputItem<small>tool output for next sample</small></div>
+              </div>
+              <div class="diagram-caption">The output type closes the loop: tool execution becomes another model observation.</div>
+            </div>
+
+            <h2>Parallel when safe, ordered when necessary</h2>
+            <p>
+              The response can contain multiple tool calls. A shared read/write gate allows handlers
+              that declare parallel support to overlap, while a non-parallel tool takes an exclusive
+              lock. Results are drained through an ordered future collection so transcript call/output
+              relationships remain stable.
+            </p>
+
+            <h2>Failure taxonomy</h2>
+            <table>
+              <thead><tr><th>Failure</th><th>Harness behavior</th><th>Why</th></tr></thead>
+              <tbody>
+                <tr><td>Unknown tool or invalid arguments</td><td>Return a failed tool output to the model</td><td>The model may correct its call.</td></tr>
+                <tr><td>Hook blocks the call/result</td><td>Return policy feedback to the model</td><td>Policy denial is useful observation data.</td></tr>
+                <tr><td>Sandbox denial</td><td>Possibly request approval/retry, otherwise return bounded denial output</td><td>Authority is controlled outside inference.</td></tr>
+                <tr><td>Runtime task panic/join failure</td><td>Fatal turn error</td><td>The execution machinery itself is unreliable.</td></tr>
+                <tr><td>User cancellation</td><td>Abort tool task and synthesize an aborted output when safe</td><td>History still needs a terminal call outcome.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="callout blue">
+              “Errors as data” is a defining agent pattern. Invalid arguments, denied actions, and
+              command failures are usually observations the planner can reason about. Infrastructure
+              corruption and broken invariants remain fatal.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/stream_events_utils.rs#L289">handle_output_item_done</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/router.rs#L148">ToolRouter::build_tool_call</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/parallel.rs#L73">ToolCallRuntime</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/registry.rs#L479">registry dispatch</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch7')">⌃ Collapse</button><button onclick="goTo('ch8')">Next: safety →</button></div>
+        </section>
+
+        <section class="chapter" id="ch8">
+          <div class="chapter-header" onclick="toggleChapter('ch8')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">8</div>
+              <div>
+                <div class="chapter-title">Safety and execution: authority below the model</div>
+                <div class="chapter-label">Approvals, policy, sandbox, and subprocesses</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              A coding model can propose a command, but only the execution plane can authorize and
+              run it. Prompt instructions describe policy; the runtime enforces policy.
+            </p>
+
+            <div class="diagram-box">
+              <svg viewBox="0 0 920 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:760px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6e7a73"/></marker></defs>
+                <text x="25" y="25" font-size="12" font-weight="800" fill="#536158" letter-spacing=".08em">EFFECT AUTHORIZATION PIPELINE</text>
+                <g font-size="11" text-anchor="middle">
+                  <rect x="25" y="60" width="145" height="58" rx="9" fill="#f1ecfb" stroke="#bba6df"/><text x="97" y="83" font-weight="800" fill="#533a85">Model proposal</text><text x="97" y="102" fill="#695393">command + requested scope</text>
+                  <rect x="205" y="60" width="145" height="58" rx="9" fill="#edf1f4" stroke="#adb9c2"/><text x="277" y="83" font-weight="800" fill="#3f4f5c">Exec policy</text><text x="277" y="102" fill="#596873">skip · forbid · approve</text>
+                  <rect x="385" y="60" width="145" height="58" rx="9" fill="#fff3dc" stroke="#dfbd78"/><text x="457" y="83" font-weight="800" fill="#6f4c14">User/guardian</text><text x="457" y="102" fill="#7a5b2b">decision when needed</text>
+                  <rect x="565" y="60" width="145" height="58" rx="9" fill="#e8f6ee" stroke="#8ec9a8"/><text x="637" y="83" font-weight="800" fill="#24583b">Sandbox plan</text><text x="637" y="102" fill="#526d5d">filesystem + network</text>
+                  <rect x="745" y="60" width="145" height="58" rx="9" fill="#eaf2fc" stroke="#91b3df"/><text x="817" y="83" font-weight="800" fill="#284f7f">Runtime</text><text x="817" y="102" fill="#48698f">local or remote exec</text>
+                </g>
+                <g stroke="#6e7a73" marker-end="url(#a8)"><line x1="170" y1="89" x2="202" y2="89"/><line x1="350" y1="89" x2="382" y2="89"/><line x1="530" y1="89" x2="562" y2="89"/><line x1="710" y1="89" x2="742" y2="89"/></g>
+
+                <rect x="250" y="175" width="420" height="50" rx="9" fill="#fcebed" stroke="#df9da2"/>
+                <text x="460" y="196" text-anchor="middle" font-size="11" font-weight="800" fill="#76343a">If the sandbox denies the operation</text>
+                <text x="460" y="214" text-anchor="middle" font-size="10" fill="#815159">classify denial → check escalation policy → explain exact retry</text>
+                <line x1="817" y1="118" x2="817" y2="200" stroke="#6e7a73"/><line x1="817" y1="200" x2="673" y2="200" stroke="#6e7a73" marker-end="url(#a8)"/>
+
+                <polygon points="350,260 570,260 620,310 570,360 350,360 300,310" fill="#fff3dc" stroke="#d8ad58"/>
+                <text x="460" y="297" text-anchor="middle" font-size="12" font-weight="800" fill="#6f4c14">Is an unsandboxed or</text>
+                <text x="460" y="314" text-anchor="middle" font-size="12" font-weight="800" fill="#6f4c14">expanded-scope retry allowed?</text>
+                <text x="460" y="337" text-anchor="middle" font-size="10" fill="#7a5b2b">policy + profile + approval decision</text>
+
+                <rect x="60" y="285" width="165" height="50" rx="9" fill="#fcebed" stroke="#df9da2"/>
+                <text x="142" y="307" text-anchor="middle" font-size="11" font-weight="800" fill="#76343a">No → return denial</text>
+                <text x="142" y="324" text-anchor="middle" font-size="9" fill="#815159">model-visible observation</text>
+                <line x1="300" y1="310" x2="228" y2="310" stroke="#6e7a73" marker-end="url(#a8)"/>
+
+                <rect x="695" y="285" width="165" height="50" rx="9" fill="#e8f6ee" stroke="#8ec9a8"/>
+                <text x="777" y="307" text-anchor="middle" font-size="11" font-weight="800" fill="#24583b">Yes → retry once</text>
+                <text x="777" y="324" text-anchor="middle" font-size="9" fill="#526d5d">no accidental re-prompt</text>
+                <line x1="620" y1="310" x2="692" y2="310" stroke="#6e7a73" marker-end="url(#a8)"/>
+              </svg>
+              <div class="diagram-caption">Approval and sandbox selection are centralized so shell and patch tools share semantics.</div>
+            </div>
+
+            <h2>What unified exec owns</h2>
+            <ul>
+              <li>Command and cwd resolution for local or foreign environments.</li>
+              <li>Approval requirements derived from command policy and the active profile.</li>
+              <li>Filesystem and network sandbox selection.</li>
+              <li>PTY creation, interactive stdin, background process reuse, and bounded output.</li>
+              <li>Cancellation, timeouts, exit state, and sandbox-denial classification.</li>
+              <li>Interception of <code>apply_patch</code> so patch semantics stay structured.</li>
+            </ul>
+
+            <div class="callout red">
+              Never rely on “the model was told not to do X.” The model-visible permission message
+              improves planning, but the permission profile, approval flow, sandbox, and executor are
+              the actual security boundary.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/orchestrator.rs">tools/orchestrator.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/unified_exec/mod.rs">unified_exec/mod.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs">exec_command.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/sandboxing/src/lib.rs">sandboxing crate</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/execpolicy/README.md">execpolicy</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch8')">⌃ Collapse</button><button onclick="goTo('ch9')">Next: streaming →</button></div>
+        </section>
+
+        <section class="chapter" id="ch9">
+          <div class="chapter-header" onclick="toggleChapter('ch9')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">9</div>
+              <div>
+                <div class="chapter-title">Streaming and UX: events are the interface</div>
+                <div class="chapter-label">Decoupling core from clients</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Codex does not return one final string. It emits a structured event stream that lets
+              a TUI, IDE, SDK, or headless runner present the same work differently.
+            </p>
+
+            <table>
+              <thead><tr><th>Event family</th><th>Examples</th><th>Client use</th></tr></thead>
+              <tbody>
+                <tr><td>Turn lifecycle</td><td>started, completed, aborted, error</td><td>Progress state, timing, usage, retry UI</td></tr>
+                <tr><td>Item lifecycle</td><td>item started/completed</td><td>Stable cards for messages, commands, patches, searches</td></tr>
+                <tr><td>Content deltas</td><td>assistant text, reasoning summary, plan</td><td>Low-latency incremental rendering</td></tr>
+                <tr><td>Tool progress</td><td>exec begin/output/end, patch begin/end, MCP begin/end</td><td>Live terminal and action status</td></tr>
+                <tr><td>Human interaction</td><td>approval, permissions, user input, elicitation</td><td>Pause the turn and collect a typed response</td></tr>
+                <tr><td>State</td><td>token count, rate limits, turn diff, model reroute</td><td>Inform navigation, warnings, and summaries</td></tr>
+              </tbody>
+            </table>
+
+            <h2>Why item lifecycle matters</h2>
+            <p>
+              A delta without an item identity is hard to reconcile, replay, or render. Codex assigns
+              stable ids, emits item start before content, and completes the same item once finalized.
+              App-server translates core events into v2 JSON-RPC notifications.
+            </p>
+
+            <h2>Interactive pauses are still tool calls</h2>
+            <p>
+              Approval and user-input tools suspend their futures while the submission loop remains
+              able to accept the corresponding response operation. This keeps interaction inside the
+              same turn without blocking the whole session runtime.
+            </p>
+
+            <div class="callout blue">
+              Treat the event stream as a public projection, not as debugging logs. It needs stable
+              identity, ordering, terminal events, bounded queues, compatibility rules, and backpressure.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/protocol/src/protocol.rs">protocol EventMsg</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn.rs#L2179">stream processing</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/app-server/src/bespoke_event_handling.rs">app-server event mapping</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/sdk/typescript/README.md#streaming-responses">SDK streaming example</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch9')">⌃ Collapse</button><button onclick="goTo('ch10')">Next: persistence →</button></div>
+        </section>
+
+        <section class="chapter" id="ch10">
+          <div class="chapter-header" onclick="toggleChapter('ch10')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">10</div>
+              <div>
+                <div class="chapter-title">Persistence, resume, and compaction</div>
+                <div class="chapter-label">A transcript is also a recovery log</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              The live prompt, durable rollout, thread catalog, and UI projection overlap—but they
+              are not the same representation.
+            </p>
+
+            <div class="diagram-box">
+              <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:720px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                <defs><marker id="a10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6e7a73"/></marker></defs>
+                <rect x="35" y="45" width="200" height="90" rx="11" fill="#f1ecfb" stroke="#bba6df"/>
+                <text x="135" y="72" text-anchor="middle" font-size="13" font-weight="800" fill="#533a85">ContextManager</text>
+                <text x="135" y="94" text-anchor="middle" font-size="10" fill="#695393">model-visible ordered history</text>
+                <text x="135" y="112" text-anchor="middle" font-size="10" fill="#695393">normalization + token estimates</text>
+
+                <rect x="350" y="45" width="200" height="90" rx="11" fill="#e8f6ee" stroke="#8ec9a8"/>
+                <text x="450" y="72" text-anchor="middle" font-size="13" font-weight="800" fill="#24583b">Rollout</text>
+                <text x="450" y="94" text-anchor="middle" font-size="10" fill="#526d5d">append-oriented reconstruction log</text>
+                <text x="450" y="112" text-anchor="middle" font-size="10" fill="#526d5d">items + context + metadata</text>
+
+                <rect x="665" y="45" width="200" height="90" rx="11" fill="#eaf2fc" stroke="#91b3df"/>
+                <text x="765" y="72" text-anchor="middle" font-size="13" font-weight="800" fill="#284f7f">Thread store / State DB</text>
+                <text x="765" y="94" text-anchor="middle" font-size="10" fill="#48698f">listing · metadata · projects</text>
+                <text x="765" y="112" text-anchor="middle" font-size="10" fill="#48698f">indexed/paginated history</text>
+
+                <line x1="235" y1="90" x2="347" y2="90" stroke="#6e7a73" marker-end="url(#a10)"/>
+                <line x1="550" y1="90" x2="662" y2="90" stroke="#6e7a73" marker-end="url(#a10)"/>
+
+                <rect x="250" y="205" width="400" height="95" rx="12" fill="#fff3dc" stroke="#dfbd78"/>
+                <text x="450" y="233" text-anchor="middle" font-size="13" font-weight="800" fill="#6f4c14">Compaction creates a replacement history window</text>
+                <text x="450" y="255" text-anchor="middle" font-size="10" fill="#7a5b2b">summary/replacement items + fresh world-state baseline</text>
+                <text x="450" y="275" text-anchor="middle" font-size="10" fill="#7a5b2b">turn context is persisted so resume reconstructs exact settings</text>
+                <text x="450" y="290" text-anchor="middle" font-size="10" fill="#7a5b2b">tool call/output invariants remain valid</text>
+
+                <line x1="135" y1="135" x2="310" y2="202" stroke="#6e7a73" marker-end="url(#a10)"/>
+                <line x1="450" y1="135" x2="450" y2="202" stroke="#6e7a73" marker-end="url(#a10)"/>
+                <line x1="765" y1="135" x2="590" y2="202" stroke="#6e7a73" marker-end="url(#a10)"/>
+              </svg>
+              <div class="diagram-caption">Different stores optimize inference, reconstruction, and browsing separately.</div>
+            </div>
+
+            <h2>Resume is a semantic operation</h2>
+            <p>
+              Correct resume requires more than old chat messages. It may need base instructions,
+              model and personality settings, dynamic tools, world-state baselines, compaction windows,
+              MCP resource origins, and call/output relationships.
+            </p>
+
+            <h2>Compaction triggers</h2>
+            <ul>
+              <li>Before sampling when a model switch would exceed a smaller context window.</li>
+              <li>When the model’s compaction-compatibility hash changes.</li>
+              <li>Mid-turn when another follow-up is needed but token thresholds are reached.</li>
+              <li>Explicitly when the user or client requests compaction.</li>
+            </ul>
+
+            <div class="callout">
+              Production agents need event sourcing instincts: record enough intent and outcome to
+              reconstruct state, while allowing derived indexes and prompt projections to evolve.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/context_manager/history.rs">ContextManager</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/rollout.rs">core rollout integration</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/thread-store">thread-store crate</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/compact.rs">compact.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/rollout_reconstruction.rs">rollout reconstruction</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch10')">⌃ Collapse</button><button onclick="goTo('ch11')">Next: extensions →</button></div>
+        </section>
+
+        <section class="chapter" id="ch11">
+          <div class="chapter-header" onclick="toggleChapter('ch11')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">11</div>
+              <div>
+                <div class="chapter-title">Extension systems: not every capability is “a tool”</div>
+                <div class="chapter-label">MCP, skills, plugins, apps, hooks, dynamic tools</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Modern harness extensibility spans discovery, instructions, execution, interaction,
+              policy, and packaging. These dimensions should remain composable rather than collapsing
+              into one plugin callback.
+            </p>
+
+            <table>
+              <thead><tr><th>Mechanism</th><th>Primary contribution</th><th>Loaded when</th><th>Execution boundary</th></tr></thead>
+              <tbody>
+                <tr><td>MCP server</td><td>Tools, resources, prompts, elicitation</td><td>Configured or required for a step</td><td>External local/remote server</td></tr>
+                <tr><td>Skill</td><td>Task-specific instructions and referenced resources</td><td>Explicitly mentioned or selected</td><td>Uses existing tools</td></tr>
+                <tr><td>Plugin</td><td>Packaged skills, MCP servers, apps, metadata</td><td>Enabled by config/capability roots</td><td>Mixed</td></tr>
+                <tr><td>App/connector</td><td>Authenticated external data/actions</td><td>Accessible and enabled for the turn</td><td>MCP-backed service</td></tr>
+                <tr><td>Hook</td><td>Inspect/block/rewrite input or observe results</td><td>Lifecycle boundary</td><td>Managed/user hook runtime</td></tr>
+                <tr><td>Dynamic tool</td><td>Caller-defined per-thread function</td><td>Thread start/resume</td><td>Response returned by controlling client</td></tr>
+                <tr><td>Core extension</td><td>Context, tools, lifecycle, item transforms</td><td>Registered in process</td><td>Native Rust implementation</td></tr>
+              </tbody>
+            </table>
+
+            <h2>Prompt-time versus execution-time extensibility</h2>
+            <div class="grid-2">
+              <div class="concept-card"><div class="eyebrow">Prompt time</div><strong>Change what the model knows</strong><p>Skills, world-state contributors, plugin instructions, and resource content add bounded context.</p></div>
+              <div class="concept-card"><div class="eyebrow">Execution time</div><strong>Change what the model can do</strong><p>Tool contributors, MCP handlers, dynamic tools, and hooks affect callable actions and results.</p></div>
+            </div>
+
+            <div class="callout amber">
+              Loading an instruction and enabling an executable capability are different security
+              decisions. A good harness can expose one without silently granting the other.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/codex-mcp">codex-mcp</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/skills">skills</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/plugin">plugin</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/plugins/mod.rs">core/plugins</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/hook_runtime.rs">hook_runtime.rs</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch11')">⌃ Collapse</button><button onclick="goTo('ch12')">Next: concurrency →</button></div>
+        </section>
+
+        <section class="chapter" id="ch12">
+          <div class="chapter-header" onclick="toggleChapter('ch12')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">12</div>
+              <div>
+                <div class="chapter-title">Concurrency, steering, and subagents</div>
+                <div class="chapter-label">Many activities, one coherent transcript</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              Concurrency improves latency but threatens transcript order, shared state, cancellation,
+              and authority. Codex introduces it at explicit boundaries.
+            </p>
+
+            <div class="grid-3">
+              <div class="concept-card"><div class="eyebrow">Within a response</div><strong>Parallel tool calls</strong><p>Safe handlers overlap; exclusive handlers serialize through the runtime gate.</p></div>
+              <div class="concept-card"><div class="eyebrow">Within a turn</div><strong>Steering and mailbox input</strong><p>New user or inter-agent input can be queued and folded into a follow-up sample.</p></div>
+              <div class="concept-card"><div class="eyebrow">Across threads</div><strong>Subagents</strong><p>Separate Codex threads run concurrently with explicit parentage, communication, and status.</p></div>
+            </div>
+
+            <h2>Subagents are threads, not recursive function calls</h2>
+            <p>
+              A spawned agent receives effective configuration, environment and permission state,
+              provider information, parent/root turn metadata, role instructions, and a separate
+              lifecycle. Communication is recorded as typed inter-agent items rather than mutating
+              another agent’s hidden prompt.
+            </p>
+
+            <h2>Concurrency invariants</h2>
+            <div class="invariant"><div class="invariant-badge">1</div><div><strong>Every activity has a cancellation boundary</strong><p>Turn cancellation propagates into sampling and tool futures.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">2</div><div><strong>Completion is explicit</strong><p>A task, process, tool, response, and subagent each need a terminal state.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">3</div><div><strong>Transcript order is deterministic</strong><p>Concurrent completion must not scramble the call/output structure sent back to the model.</p></div></div>
+            <div class="invariant"><div class="invariant-badge">4</div><div><strong>Authority is inherited deliberately</strong><p>A subagent does not obtain broader sandbox or approval rights merely by being spawned.</p></div></div>
+
+            <div class="callout blue">
+              Multi-agent orchestration is an extension of the thread model: spawn, message, follow
+              up, interrupt, list, and wait. This is easier to reason about than sharing one mutable
+              context among concurrent planners.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/agent/control.rs">agent/control.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/handlers/multi_agents.rs">multi_agents.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/core/src/tools/handlers/multi_agents_v2">multi_agents_v2/</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/input_queue.rs">session/input_queue.rs</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch12')">⌃ Collapse</button><button onclick="goTo('ch13')">Next: reliability →</button></div>
+        </section>
+
+        <section class="chapter" id="ch13">
+          <div class="chapter-header" onclick="toggleChapter('ch13')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">13</div>
+              <div>
+                <div class="chapter-title">Reliability, observability, and testing</div>
+                <div class="chapter-label">Making stochastic orchestration debuggable</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              The model is stochastic; the harness should not be. Codex surrounds inference with
+              deterministic event, persistence, retry, cancellation, and test boundaries.
+            </p>
+
+            <h2>Bound everything</h2>
+            <table>
+              <thead><tr><th>Resource</th><th>Bounding mechanism</th><th>Failure if omitted</th></tr></thead>
+              <tbody>
+                <tr><td>Conversation context</td><td>Token estimates, truncation, compaction windows</td><td>Request rejection or unbounded cost</td></tr>
+                <tr><td>Tool output</td><td>Byte/token caps and head-tail truncation</td><td>One command consumes the context window</td></tr>
+                <tr><td>Processes</td><td>Process count, timeouts, output buffers, cleanup</td><td>Resource exhaustion and leaked subprocesses</td></tr>
+                <tr><td>Queues</td><td>Bounded transport and event channels</td><td>Slow clients exhaust server memory</td></tr>
+                <tr><td>Retries</td><td>Provider retry budget and transport fallback</td><td>Infinite loops and duplicate effects</td></tr>
+                <tr><td>Extensions</td><td>Capability selection, collisions, readiness waits</td><td>Prompt bloat and ambiguous dispatch</td></tr>
+              </tbody>
+            </table>
+
+            <h2>Observe spans that match architectural lifetimes</h2>
+            <p>
+              Thread/session, turn, sampling attempt, response reception, tool dispatch, approval,
+              sandbox attempt, and compaction each have distinct tracing and timing meaning. The code
+              passes trace context through submissions and records request/tool metadata without
+              making telemetry the source of truth.
+            </p>
+
+            <h2>Test at the protocol boundary</h2>
+            <p>
+              Core integration tests mount deterministic fake Responses streams, submit a real user
+              turn, observe emitted events, inspect captured request bodies, and assert tool outputs
+              in later requests. This tests the whole orchestration contract without a live model.
+            </p>
+
+            <div class="code-block"><span class="comment">// Representative integration-test shape</span>
+server.mount_sse_once([
+    response_created(<span class="value">"resp-1"</span>),
+    function_call(<span class="value">"call-1"</span>, <span class="value">"exec_command"</span>, args),
+    response_completed(<span class="value">"resp-1"</span>),
+]);
+
+codex.submit(user_turn).await;
+event = wait_for_event(exec_completed).await;
+request = response_mock.single_request();
+assert_eq!(request.function_call_output(<span class="value">"call-1"</span>), expected);</div>
+
+            <div class="callout">
+              The best agent tests script model behavior and assert harness behavior. Unit-testing a
+              static tool schema is less valuable than proving that a call is exposed, executed,
+              persisted, returned to the next sample, and surfaced to the client correctly.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Read in the repository</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/tests/common/responses.rs">tests/common/responses.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/tests/common/test_codex.rs">tests/common/test_codex.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/core/tests/suite">core/tests/suite</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/responses_retry.rs">responses_retry.rs</a>
+                <a class="source-link" href="https://github.com/openai/codex/tree/main/codex-rs/otel">otel</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch13')">⌃ Collapse</button><button onclick="goTo('ch14')">Next: build one →</button></div>
+        </section>
+
+        <section class="chapter" id="ch14">
+          <div class="chapter-header" onclick="toggleChapter('ch14')">
+            <div class="chapter-header-left">
+              <div class="chapter-num">14</div>
+              <div>
+                <div class="chapter-title">Build the minimal harness—and know what is missing</div>
+                <div class="chapter-label">Synthesis and implementation checklist</div>
+              </div>
+            </div>
+            <span class="chevron">⌃</span>
+          </div>
+          <div class="chapter-body">
+            <p class="lead">
+              A toy harness can fit on one screen. A trustworthy harness is the list of invariants
+              that surround that screen.
+            </p>
+
+            <div class="code-block"><span class="keyword">async function</span> runTurn(userInput, state, cancel) {
+  state.history.append(userInput);
+
+  <span class="keyword">while</span> (!cancel.requested) {
+    <span class="comment">// Capture one coherent view for both advertisement and execution.</span>
+    const step = await captureStep({
+      model: state.model,
+      environment: state.environment,
+      permissions: state.permissions,
+      extensions: state.extensions
+    });
+
+    const prompt = normalizeAndBound({
+      instructions: state.instructions,
+      worldStateDelta: step.worldStateDelta,
+      history: state.history,
+      tools: step.visibleToolSpecs
+    });
+
+    const response = await streamModel(prompt, cancel);
+    const toolCalls = [];
+
+    <span class="keyword">for await</span> (const event of response) {
+      emitToClient(event);
+      <span class="keyword">if</span> (event.completedItem) {
+        await persist(event.completedItem);
+        state.history.append(event.completedItem);
+        <span class="keyword">if</span> (event.completedItem.isToolCall) toolCalls.push(event.completedItem);
+      }
+    }
+
+    <span class="keyword">if</span> (toolCalls.length === <span class="value">0</span>) return finalAssistantMessage(state.history);
+
+    const outputs = await executeWithPolicy(toolCalls, step, cancel);
+    await persistInCallOrder(outputs);
+    state.history.appendAll(outputs);
+    maybeCompact(state);
+  }
+}</div>
+
+            <h2>Production-readiness checklist</h2>
+            <div class="grid-2">
+              <div class="concept-card"><div class="eyebrow">State</div><strong>Typed, incremental context</strong><p>Stable ordering, call/output normalization, bounded fragments, compaction, resume.</p></div>
+              <div class="concept-card"><div class="eyebrow">Authority</div><strong>Policy below inference</strong><p>Tool allowlist, argument validation, approvals, permission scopes, sandbox, audit trail.</p></div>
+              <div class="concept-card"><div class="eyebrow">Execution</div><strong>Explicit lifecycle</strong><p>Ids, readiness, cancellation, timeout, progress, terminal outcome, bounded result.</p></div>
+              <div class="concept-card"><div class="eyebrow">Interface</div><strong>Structured event stream</strong><p>Typed items and deltas, backpressure, compatibility, interaction requests.</p></div>
+              <div class="concept-card"><div class="eyebrow">Reliability</div><strong>Retry without duplicate effects</strong><p>Distinguish sampling retries from tool retries; persist before crossing risky boundaries.</p></div>
+              <div class="concept-card"><div class="eyebrow">Verification</div><strong>Scripted model integration tests</strong><p>Assert requests, events, tool outputs, cancellation, persistence, and recovery.</p></div>
+            </div>
+
+            <h2>Ten durable lessons from Codex</h2>
+            <ol>
+              <li>The model is the planner; the harness is the authority.</li>
+              <li>A user turn may contain many model/tool iterations.</li>
+              <li>Context should be typed state with incremental projection.</li>
+              <li>Advertise and execute tools from the same request snapshot.</li>
+              <li>Separate tool schemas, exposure policy, routing, and execution.</li>
+              <li>Treat recoverable tool failures as observations.</li>
+              <li>Make session, turn, step, and call lifetimes explicit.</li>
+              <li>Use structured events as the UI boundary.</li>
+              <li>Persist enough information to reconstruct intent and outcome.</li>
+              <li>Bound every resource and test the full loop with a fake model.</li>
+            </ol>
+
+            <div class="callout">
+              The deepest lesson is that a modern coding harness is not a clever prompt wrapper.
+              It is a capability-secure, event-driven, persistent workflow runtime optimized for an
+              unreliable-but-powerful planner.
+            </div>
+            <div class="source-trail">
+              <div class="source-trail-title">Suggested code-reading order</div>
+              <div class="source-links">
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md">1 · app-server lifecycle</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/turn.rs">2 · turn loop</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/session/step_context.rs">3 · step snapshot</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/spec_plan.rs">4 · tool planning</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/src/tools/orchestrator.rs">5 · effect policy</a>
+                <a class="source-link" href="https://github.com/openai/codex/blob/main/codex-rs/core/tests/suite/unified_exec.rs">6 · integration tests</a>
+              </div>
+            </div>
+          </div>
+          <div class="chapter-footer"><button onclick="toggleChapter('ch14')">⌃ Collapse</button><button onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top ↑</button></div>
+        </section>
+
+        <p class="footer-note">
+          Source paths and line anchors describe the repository snapshot studied on August 21, 2026.
+          The architecture evolves; follow the linked types and tests when line numbers drift.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function toggleChapter(id) {
+      const chapter = document.getElementById(id);
+      if (!chapter) return;
+      chapter.classList.toggle('collapsed');
+      updateActiveNav();
+    }
+
+    function setAllChapters(collapsed) {
+      document.querySelectorAll('.chapter').forEach(chapter => {
+        chapter.classList.toggle('collapsed', collapsed);
+      });
+      updateActiveNav();
+    }
+
+    function goTo(id) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      target.classList.remove('collapsed');
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + id);
+    }
+
+    const navLinks = Array.from(document.querySelectorAll('.sidebar a[href^="#"]'))
+      .map(link => ({
+        link,
+        target: document.getElementById(link.getAttribute('href').slice(1))
+      }))
+      .filter(entry => entry.target);
+
+    navLinks.forEach(entry => {
+      entry.link.addEventListener('click', event => {
+        event.preventDefault();
+        goTo(entry.target.id);
+      });
+    });
+
+    function updateActiveNav() {
+      let active = null;
+      for (const entry of navLinks) {
+        if (entry.target.getClientRects().length === 0) continue;
+        if (entry.target.getBoundingClientRect().top <= 155) active = entry;
+      }
+      if (!active && navLinks.length) active = navLinks[0];
+      navLinks.forEach(entry => entry.link.classList.toggle('active', entry === active));
+    }
+
+    window.addEventListener('scroll', updateActiveNav, { passive: true });
+    window.addEventListener('resize', updateActiveNav);
+    window.addEventListener('beforeprint', () => setAllChapters(false));
+
+    if (window.location.hash) {
+      const initial = document.getElementById(window.location.hash.slice(1));
+      if (initial) initial.classList.remove('collapsed');
+    }
+    updateActiveNav();
+  </script>
+</body>
+</html>

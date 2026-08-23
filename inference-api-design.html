@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="A practical tutorial on designing reliable inference APIs by making distributed-system semantics explicit."
+  />
+  <title>Designing a Production-Grade Inference API</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink: #172033;
+      --muted: #647087;
+      --line: #dce3ee;
+      --line-strong: #c9d3e2;
+      --paper: #ffffff;
+      --canvas: #f3f6fa;
+      --navy: #111a2d;
+      --blue: #3157d5;
+      --blue-dark: #2344ad;
+      --blue-soft: #edf2ff;
+      --cyan: #087f98;
+      --cyan-soft: #e7f7fa;
+      --violet: #7352c7;
+      --violet-soft: #f1edfc;
+      --amber: #a66007;
+      --amber-soft: #fff4df;
+      --red: #b23b4b;
+      --red-soft: #fcecef;
+      --green: #18794e;
+      --green-soft: #eaf7f0;
+      --slate-soft: #eef2f7;
+      --shadow: 0 2px 6px rgba(23, 32, 51, .04), 0 16px 42px rgba(23, 32, 51, .07);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 9% 0%, rgba(49, 87, 213, .09), transparent 27rem),
+        radial-gradient(circle at 100% 20%, rgba(8, 127, 152, .06), transparent 30rem),
+        var(--canvas);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      line-height: 1.64;
+      padding: 30px 20px 72px;
+    }
+
+    a {
+      color: var(--blue);
+    }
+
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      transform: translateY(-150%);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      padding: 8px 12px;
+      box-shadow: var(--shadow);
+      font-weight: 750;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .page-shell {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 22px;
+      background:
+        linear-gradient(115deg, rgba(49, 87, 213, .18), transparent 42%),
+        linear-gradient(145deg, #111a2d 15%, #18233b 64%, #102a35 100%);
+      color: #fff;
+      padding: 40px 42px 36px;
+      margin-bottom: 24px;
+      box-shadow: 0 22px 54px rgba(17, 26, 45, .22);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: .17;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .12) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(90deg, transparent, #000 42%, #000);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 440px;
+      height: 440px;
+      right: -120px;
+      top: -230px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(58, 206, 220, .34), rgba(58, 206, 220, 0) 68%);
+    }
+
+    .hero-kicker {
+      color: #8ddde8;
+      font-size: .72rem;
+      font-weight: 850;
+      letter-spacing: .14em;
+      margin-bottom: 11px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      max-width: 980px;
+      font-size: clamp(2.2rem, 5vw, 4.15rem);
+      letter-spacing: -.045em;
+      line-height: 1.01;
+      margin-bottom: 17px;
+    }
+
+    .hero-summary {
+      max-width: 890px;
+      color: #cbd5e7;
+      font-size: 1.03rem;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-meta span {
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .07);
+      color: #dce5f2;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 6px 11px;
+    }
+
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 26px;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 18px;
+      flex: 0 0 265px;
+      max-height: calc(100vh - 36px);
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      scrollbar-width: thin;
+    }
+
+    .sidebar-kicker {
+      color: var(--blue);
+      font-size: .66rem;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-title {
+      font-size: .96rem;
+      font-weight: 820;
+      margin: 2px 0 13px;
+    }
+
+    .progress-track {
+      height: 4px;
+      border-radius: 999px;
+      background: #e9edf4;
+      margin-bottom: 17px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 16.667%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+    }
+
+    .sidebar nav ol {
+      list-style: none;
+    }
+
+    .sidebar nav li {
+      margin: 2px 0;
+    }
+
+    .sidebar nav a {
+      display: block;
+      border-left: 2px solid transparent;
+      border-radius: 0 7px 7px 0;
+      color: #5e6a7e;
+      font-size: .78rem;
+      line-height: 1.35;
+      padding: 6px 7px 6px 10px;
+      text-decoration: none;
+    }
+
+    .sidebar nav a:hover {
+      background: #f4f6fa;
+      color: var(--ink);
+    }
+
+    .sidebar nav a.active {
+      border-left-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue-dark);
+      font-weight: 760;
+    }
+
+    .sidebar .section-link {
+      padding-left: 19px;
+      font-size: .74rem;
+    }
+
+    .sidebar-note {
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .72rem;
+      line-height: 1.45;
+      margin-top: 15px;
+      padding-top: 13px;
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+      min-width: 0;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .orientation {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .orientation-card {
+      min-height: 138px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper);
+      box-shadow: 0 2px 12px rgba(23, 32, 51, .04);
+      padding: 17px;
+    }
+
+    .orientation-num {
+      color: var(--blue);
+      font-size: .66rem;
+      font-weight: 850;
+      letter-spacing: .1em;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .orientation-card strong {
+      display: block;
+      font-size: .94rem;
+      margin-bottom: 5px;
+    }
+
+    .orientation-card p {
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.48;
+    }
+
+    .chapter {
+      overflow: hidden;
+      scroll-margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .chapter-header {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 0;
+      background: var(--paper);
+      color: inherit;
+      cursor: pointer;
+      padding: 20px 22px;
+      text-align: left;
+    }
+
+    .chapter-header:hover {
+      background: #fbfcfe;
+    }
+
+    .chapter-header-left {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .chapter-num {
+      display: flex;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: linear-gradient(145deg, var(--blue), #273c8e);
+      color: #fff;
+      font-size: .86rem;
+      font-weight: 850;
+      box-shadow: 0 7px 16px rgba(49, 87, 213, .22);
+    }
+
+    .chapter-title {
+      font-size: 1.08rem;
+      font-weight: 820;
+      line-height: 1.25;
+    }
+
+    .chapter-label {
+      color: #7b8799;
+      font-size: .65rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .chevron {
+      color: #7d899b;
+      font-size: 1.1rem;
+      transition: transform .2s ease;
+    }
+
+    .chapter.collapsed .chevron {
+      transform: rotate(180deg);
+    }
+
+    .chapter.collapsed .chapter-body,
+    .chapter.collapsed .chapter-footer {
+      display: none;
+    }
+
+    .chapter-body {
+      border-top: 1px solid #edf0f5;
+      padding: 25px 26px 30px;
+    }
+
+    .chapter-body > p,
+    .chapter-body li {
+      color: #374258;
+      font-size: .94rem;
+    }
+
+    .chapter-body > p {
+      margin-bottom: 15px;
+    }
+
+    .chapter-body h2 {
+      scroll-margin-top: 20px;
+      font-size: 1.22rem;
+      letter-spacing: -.015em;
+      line-height: 1.3;
+      margin: 31px 0 11px;
+    }
+
+    .chapter-body h3 {
+      font-size: .97rem;
+      margin: 20px 0 8px;
+    }
+
+    .chapter-body ul,
+    .chapter-body ol {
+      margin: 10px 0 17px 21px;
+    }
+
+    .chapter-body li {
+      margin: 5px 0;
+    }
+
+    .lead {
+      color: #263149 !important;
+      font-size: 1.05rem !important;
+      line-height: 1.68;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: .65rem;
+      font-weight: 850;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      border-radius: 0 10px 10px 0;
+      background: var(--blue-soft);
+      color: #29406f;
+      font-size: .9rem;
+      margin: 18px 0;
+      padding: 14px 16px;
+    }
+
+    .callout strong {
+      color: inherit;
+    }
+
+    .callout.amber {
+      border-left-color: var(--amber);
+      background: var(--amber-soft);
+      color: #684a18;
+    }
+
+    .callout.green {
+      border-left-color: var(--green);
+      background: var(--green-soft);
+      color: #24563d;
+    }
+
+    .callout.red {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+      color: #73323c;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .concept-card {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fbfcfe;
+      padding: 15px;
+    }
+
+    .concept-card strong {
+      display: block;
+      font-size: .92rem;
+      margin: 4px 0 5px;
+    }
+
+    .concept-card p {
+      color: var(--muted);
+      font-size: .81rem;
+      line-height: 1.5;
+    }
+
+    .incident {
+      overflow: hidden;
+      border: 1px solid #ead5a9;
+      border-radius: 12px;
+      background: #fffdf9;
+      margin: 17px 0 20px;
+    }
+
+    .incident-header {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border-bottom: 1px solid #f0e3c8;
+      background: var(--amber-soft);
+      color: #674817;
+      font-size: .76rem;
+      font-weight: 830;
+      letter-spacing: .07em;
+      padding: 10px 14px;
+      text-transform: uppercase;
+    }
+
+    .incident-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 4px rgba(166, 96, 7, .12);
+    }
+
+    .incident-body {
+      padding: 17px;
+    }
+
+    .incident-body p {
+      color: #495166;
+      font-size: .9rem;
+      margin-bottom: 12px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: 126px 40px 1fr;
+      gap: 0 10px;
+      margin-top: 13px;
+    }
+
+    .timeline-time {
+      color: #7c6b4d;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: .72rem;
+      padding-top: 3px;
+      text-align: right;
+    }
+
+    .timeline-marker {
+      position: relative;
+      min-height: 59px;
+    }
+
+    .timeline-marker::before {
+      content: "";
+      position: absolute;
+      left: 19px;
+      top: 9px;
+      bottom: -9px;
+      width: 1px;
+      background: #ddc99f;
+    }
+
+    .timeline-marker::after {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 4px;
+      width: 9px;
+      height: 9px;
+      border: 2px solid #fffdf9;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 1px #d6ba84;
+    }
+
+    .timeline-row:last-child .timeline-marker::before {
+      display: none;
+    }
+
+    .timeline-event {
+      color: #3d4659;
+      font-size: .83rem;
+      line-height: 1.45;
+      padding-bottom: 17px;
+    }
+
+    .timeline-event strong {
+      display: block;
+      color: #293348;
+    }
+
+    .question-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0 21px;
+    }
+
+    .question {
+      border: 1px solid #d9dff0;
+      border-radius: 10px;
+      background: #fafbff;
+      color: #35405b;
+      font-size: .82rem;
+      line-height: 1.48;
+      padding: 13px;
+    }
+
+    .question span {
+      display: block;
+      color: var(--violet);
+      font-size: .62rem;
+      font-weight: 850;
+      letter-spacing: .09em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .formula {
+      display: grid;
+      grid-template-columns:
+        minmax(112px, 1fr) 24px
+        minmax(112px, 1fr) 24px
+        minmax(112px, 1fr) 24px
+        minmax(112px, 1fr) 24px
+        minmax(112px, 1fr) 24px
+        minmax(112px, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-width: 760px;
+    }
+
+    .formula-term {
+      border: 1px solid;
+      border-radius: 9px;
+      font-size: .77rem;
+      font-weight: 780;
+      line-height: 1.35;
+      padding: 11px 9px;
+      text-align: center;
+    }
+
+    .formula-symbol {
+      color: #8390a2;
+      font-size: 1rem;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .tone-blue { border-color: #b9c8f1; background: var(--blue-soft); color: #294aaf; }
+    .tone-cyan { border-color: #acdce4; background: var(--cyan-soft); color: #17677a; }
+    .tone-violet { border-color: #d2c6ee; background: var(--violet-soft); color: #5a4292; }
+    .tone-amber { border-color: #ead2a4; background: var(--amber-soft); color: #73501a; }
+    .tone-green { border-color: #b6ddc9; background: var(--green-soft); color: #246044; }
+    .tone-slate { border-color: #ced7e3; background: var(--slate-soft); color: #46566c; }
+
+    .diagram-box {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fcfdff;
+      margin: 18px 0;
+      padding: 18px 18px 11px;
+    }
+
+    .diagram-caption {
+      color: var(--muted);
+      font-size: .8rem;
+      font-style: italic;
+      margin: 11px 0 2px;
+      text-align: center;
+    }
+
+    .plane-map {
+      display: grid;
+      grid-template-columns: 1fr 52px 1fr;
+      min-width: 690px;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .plane {
+      border: 1px solid;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .plane.control {
+      border-color: #b8c6ef;
+      background: var(--blue-soft);
+    }
+
+    .plane.data {
+      border-color: #a9dbe4;
+      background: var(--cyan-soft);
+    }
+
+    .plane h3 {
+      margin: 0 0 4px;
+      font-size: .97rem;
+    }
+
+    .plane p {
+      color: #546076;
+      font-size: .8rem;
+      line-height: 1.45;
+    }
+
+    .plane-items {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .plane-item {
+      border: 1px solid rgba(70, 90, 130, .16);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .74);
+      color: #35445d;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: .72rem;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .plane-bridge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8290a4;
+      font-size: 1.35rem;
+      font-weight: 850;
+    }
+
+    .resource-map {
+      display: grid;
+      grid-template-columns: 1fr 60px 1fr;
+      min-width: 720px;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+    }
+
+    .resource-stack {
+      display: grid;
+      gap: 9px;
+    }
+
+    .resource-node {
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: #fff;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .resource-node strong {
+      display: block;
+      font-size: .85rem;
+    }
+
+    .resource-node small {
+      color: var(--muted);
+      display: block;
+      font-size: .72rem;
+      margin-top: 2px;
+    }
+
+    .resource-node.primary {
+      border-color: #9fb3ed;
+      background: var(--blue-soft);
+    }
+
+    .resource-node.transient {
+      border-color: #9ed4df;
+      background: var(--cyan-soft);
+    }
+
+    .resource-arrow {
+      color: #7f8ca0;
+      font-size: 1.35rem;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .code-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .code-shell {
+      overflow: hidden;
+      border: 1px solid #25314a;
+      border-radius: 11px;
+      background: #131b2c;
+      box-shadow: 0 8px 22px rgba(18, 28, 48, .12);
+    }
+
+    .code-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      background: #182238;
+      color: #aebad0;
+      font-size: .65rem;
+      font-weight: 780;
+      letter-spacing: .08em;
+      padding: 8px 11px;
+      text-transform: uppercase;
+    }
+
+    .copy-button {
+      border: 0;
+      background: transparent;
+      color: #9faec5;
+      cursor: pointer;
+      font: inherit;
+      letter-spacing: .04em;
+      text-transform: none;
+    }
+
+    .copy-button:hover,
+    .copy-button:focus-visible {
+      color: #fff;
+    }
+
+    .code-shell pre {
+      overflow-x: auto;
+      color: #dce5f1;
+      font-size: .77rem;
+      line-height: 1.62;
+      padding: 15px 16px 17px;
+      white-space: pre;
+    }
+
+    .code-shell .comment { color: #8291a8; }
+    .code-shell .keyword { color: #89b4ff; }
+    .code-shell .string { color: #9be2bd; }
+    .code-shell .number { color: #f2c777; }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 46px 1fr;
+      align-items: stretch;
+      gap: 10px;
+      margin: 17px 0;
+    }
+
+    .comparison-panel {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 15px;
+    }
+
+    .comparison-panel.bad {
+      border-color: #ecc5cc;
+      background: #fffafb;
+    }
+
+    .comparison-panel.good {
+      border-color: #b7dfca;
+      background: #fbfffc;
+    }
+
+    .comparison-panel strong {
+      display: block;
+      font-size: .88rem;
+      margin: 5px 0 8px;
+    }
+
+    .comparison-panel ul {
+      margin-bottom: 0;
+    }
+
+    .comparison-panel li {
+      font-size: .8rem;
+    }
+
+    .comparison-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8090a4;
+      font-size: 1.3rem;
+      font-weight: 850;
+    }
+
+    .contract-box {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #9fb2ea;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #edf2ff, #f8faff);
+      margin: 20px 0;
+      padding: 19px 20px 18px;
+    }
+
+    .contract-box::after {
+      content: "CONTRACT";
+      position: absolute;
+      right: 14px;
+      top: 10px;
+      color: rgba(49, 87, 213, .08);
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .contract-box .contract-label {
+      color: var(--blue);
+      font-size: .66rem;
+      font-weight: 880;
+      letter-spacing: .12em;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .contract-box p {
+      position: relative;
+      z-index: 1;
+      max-width: 790px;
+      color: #243a74;
+      font-size: 1rem;
+      font-weight: 720;
+      line-height: 1.55;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: .8rem;
+    }
+
+    th {
+      background: #f1f4f8;
+      color: #556178;
+      font-size: .66rem;
+      font-weight: 850;
+      letter-spacing: .07em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+    }
+
+    td {
+      color: #3e495f;
+    }
+
+    .test-list {
+      display: grid;
+      gap: 9px;
+      margin: 15px 0;
+    }
+
+    .test-item {
+      display: grid;
+      grid-template-columns: 29px 1fr;
+      align-items: start;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fbfcfe;
+      padding: 11px 12px;
+    }
+
+    .test-badge {
+      display: flex;
+      width: 25px;
+      height: 25px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: .75rem;
+      font-weight: 900;
+    }
+
+    .test-item strong {
+      display: block;
+      font-size: .84rem;
+      margin-bottom: 2px;
+    }
+
+    .test-item p {
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.45;
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+      margin: 15px 0;
+    }
+
+    .check-item {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fbfcfe;
+      color: #3e495f;
+      font-size: .82rem;
+      line-height: 1.45;
+      padding: 11px 12px 11px 39px;
+    }
+
+    .check-item::before {
+      content: "?";
+      position: absolute;
+      left: 11px;
+      top: 11px;
+      display: flex;
+      width: 18px;
+      height: 18px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--violet-soft);
+      color: var(--violet);
+      font-size: .68rem;
+      font-weight: 900;
+    }
+
+    .chapter-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-top: 1px solid #edf0f5;
+      background: #fbfcfe;
+      padding: 13px 20px;
+    }
+
+    .chapter-footer button {
+      border: 0;
+      background: transparent;
+      color: #647087;
+      cursor: pointer;
+      font-size: .76rem;
+      font-weight: 750;
+    }
+
+    .chapter-footer button:hover {
+      color: var(--blue);
+    }
+
+    .next-chapter {
+      color: #788397;
+      font-size: .76rem;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      color: #758095;
+      font-size: .76rem;
+      padding: 8px 10px 0;
+      text-align: center;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(49, 87, 213, .32);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 1020px) {
+      body { padding: 18px 12px 55px; }
+      .hero { padding: 32px 27px; }
+      .layout { flex-direction: column; gap: 16px; }
+      .container { width: 100%; }
+      .sidebar {
+        position: static;
+        width: 100%;
+        max-height: none;
+        flex: none;
+      }
+      .sidebar nav ol { columns: 2; column-gap: 18px; }
+      .sidebar nav li { break-inside: avoid; }
+      .sidebar-note { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .hero h1 { font-size: 2.35rem; }
+      .orientation,
+      .grid-3,
+      .grid-4,
+      .question-strip { grid-template-columns: 1fr; }
+      .grid-2,
+      .code-pair,
+      .checklist { grid-template-columns: 1fr; }
+      .comparison { grid-template-columns: 1fr; }
+      .comparison-arrow { transform: rotate(90deg); }
+      .plane-map,
+      .resource-map {
+        grid-template-columns: 1fr;
+        min-width: 0;
+      }
+      .plane-bridge,
+      .resource-arrow {
+        min-height: 26px;
+        transform: rotate(90deg);
+      }
+      .chapter-body { padding: 21px 17px 25px; }
+      .chapter-header { padding: 17px; }
+      .timeline { grid-template-columns: 82px 28px 1fr; gap: 0 7px; }
+      .timeline-marker::before { left: 13px; }
+      .timeline-marker::after { left: 8px; }
+      .sidebar nav ol { columns: 1; }
+    }
+
+    @media (max-width: 470px) {
+      body { padding: 9px 8px 42px; }
+      .hero { border-radius: 15px; padding: 27px 20px; }
+      .hero h1 { font-size: 2rem; }
+      .hero-summary { font-size: .92rem; }
+      .chapter-title { font-size: .98rem; }
+      .chapter-num { width: 37px; height: 37px; flex-basis: 37px; }
+      .timeline-time { display: none; }
+      .timeline { grid-template-columns: 28px 1fr; }
+      .timeline-marker { grid-column: 1; }
+      .timeline-event { grid-column: 2; }
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .skip-link, .sidebar, .chapter-footer, .copy-button { display: none !important; }
+      .hero {
+        border-radius: 0;
+        box-shadow: none;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .layout { display: block; }
+      .chapter { border: 0; box-shadow: none; }
+      .chapter.collapsed .chapter-body { display: block; }
+      .chapter-header { padding-left: 0; padding-right: 0; }
+      .chevron { display: none; }
+      .code-shell,
+      .contract-box,
+      .callout,
+      .incident { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#chapter-1">Skip to Chapter 1</a>
+
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-kicker">Modern distributed systems · Chapter 1 prototype</div>
+      <h1>Designing a Production-Grade Inference API</h1>
+      <p class="hero-summary">
+        A practical tutorial on turning retries, shared state, long-running work, streaming,
+        and evolution into simple contracts consumers can trust. We begin with the decision
+        underneath every endpoint: what, exactly, does the API promise?
+      </p>
+      <div class="hero-meta">
+        <span>REST / JSON contract</span>
+        <span>Python SDK experience</span>
+        <span>Failure-driven design</span>
+        <span>Chapter 1 of 6</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-kicker">Tutorial progress</div>
+        <div class="sidebar-title">Chapter 1 of 6</div>
+        <div class="progress-track" aria-label="Tutorial progress: 1 of 6 chapters">
+          <div class="progress-bar"></div>
+        </div>
+        <nav aria-label="Chapter 1 contents">
+          <ol>
+            <li><a class="active" href="#chapter-1">1. API design is semantics</a></li>
+            <li><a class="section-link" href="#incident">The production incident</a></li>
+            <li><a class="section-link" href="#contract-anatomy">Anatomy of a contract</a></li>
+            <li><a class="section-link" href="#planes">Control and data planes</a></li>
+            <li><a class="section-link" href="#resource-model">Resource, operation, request</a></li>
+            <li><a class="section-link" href="#intent">Design from intent</a></li>
+            <li><a class="section-link" href="#rest-contract">REST and Python contract</a></li>
+            <li><a class="section-link" href="#server-obligation">Server obligation</a></li>
+            <li><a class="section-link" href="#contract-tests">Contract tests</a></li>
+            <li><a class="section-link" href="#guarantee">Guarantee and checklist</a></li>
+            <li><a class="section-link" href="#ledger">Contract ledger</a></li>
+          </ol>
+        </nav>
+        <p class="sidebar-note">
+          This iteration intentionally contains only Chapter 1. The visual and teaching patterns
+          will be reused after the chapter is reviewed.
+        </p>
+      </aside>
+
+      <main class="container">
+        <section class="orientation" aria-label="Chapter orientation">
+          <div class="orientation-card">
+            <div class="orientation-num">Question 1</div>
+            <strong>What does success mean?</strong>
+            <p>A response code is not enough. Consumers need to know which state now exists and which work remains.</p>
+          </div>
+          <div class="orientation-card">
+            <div class="orientation-num">Question 2</div>
+            <strong>What should stay hidden?</strong>
+            <p>Schedulers and GPU placement are implementation details. Ownership and readiness are not.</p>
+          </div>
+          <div class="orientation-card">
+            <div class="orientation-num">Question 3</div>
+            <strong>What makes a contract durable?</strong>
+            <p>Explicit identity, state transitions, failure behavior, consistency, lifecycle, and compatibility.</p>
+          </div>
+        </section>
+
+        <section class="chapter" id="chapter-1">
+          <button
+            class="chapter-header"
+            type="button"
+            aria-expanded="true"
+            aria-controls="chapter-1-body"
+            onclick="toggleChapter('chapter-1', this)"
+          >
+            <span class="chapter-header-left">
+              <span class="chapter-num">01</span>
+              <span>
+                <span class="chapter-title">API design is about semantics</span>
+                <span class="chapter-label">Intent before endpoints</span>
+              </span>
+            </span>
+            <span class="chevron" aria-hidden="true">⌃</span>
+          </button>
+
+          <div class="chapter-body" id="chapter-1-body">
+            <p class="lead">
+              An API is not a collection of URLs or method signatures. It is a contract describing
+              consumer intent, state transitions, failure behavior, consistency, lifecycle, and
+              evolution. The schema is only the visible edge of that contract.
+            </p>
+
+            <div class="code-pair">
+              <div class="code-shell">
+                <div class="code-toolbar">
+                  <span>Python · first draft</span>
+                  <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>deployment = client.create_deployment(
+    model=<span class="string">"llama-3.1-70b"</span>,
+    replicas=<span class="number">4</span>,
+)
+
+response = client.generate(
+    deployment=deployment.id,
+    input=<span class="string">"Explain transformers."</span>,
+)</code></pre>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">It looks complete</div>
+                <strong>Two methods, obvious nouns, pleasant defaults.</strong>
+                <p>But the surface does not say whether the deployment is merely recorded, actively scheduling, or ready to serve.</p>
+                <div class="callout amber">
+                  <strong>Simple syntax can conceal an underspecified contract.</strong> The problem appears only when production timing, failure, and concurrency arrive.
+                </div>
+              </div>
+            </div>
+
+            <h2 id="incident">The production incident</h2>
+            <p>
+              The first customer creates a deployment and immediately sends a generation request.
+              The control plane has accepted the configuration, but no GPU worker is ready yet.
+            </p>
+
+            <div class="incident">
+              <div class="incident-header"><span class="incident-dot"></span> Incident 01 · “Created” but not serving</div>
+              <div class="incident-body">
+                <p>The client and platform both behaved as implemented. They disagreed about what the API meant.</p>
+                <div class="timeline-row timeline">
+                  <div class="timeline-time">12:00:00.000</div>
+                  <div class="timeline-marker"></div>
+                  <div class="timeline-event"><strong>Client calls create_deployment()</strong>Four replicas are requested for a model alias.</div>
+                </div>
+                <div class="timeline-row timeline">
+                  <div class="timeline-time">12:00:00.084</div>
+                  <div class="timeline-marker"></div>
+                  <div class="timeline-event"><strong>Control plane persists desired state</strong>A deployment record exists; reconciliation is queued.</div>
+                </div>
+                <div class="timeline-row timeline">
+                  <div class="timeline-time">12:00:00.091</div>
+                  <div class="timeline-marker"></div>
+                  <div class="timeline-event"><strong>Client receives “success”</strong>The SDK returns a Deployment object.</div>
+                </div>
+                <div class="timeline-row timeline">
+                  <div class="timeline-time">12:00:00.103</div>
+                  <div class="timeline-marker"></div>
+                  <div class="timeline-event"><strong>Client calls generate()</strong>No replica is ready; the request cannot be served.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="question-strip">
+              <div class="question"><span>Existence</span>Did success mean the deployment resource exists?</div>
+              <div class="question"><span>Progress</span>Did success mean scheduling has started?</div>
+              <div class="question"><span>Readiness</span>Did success mean generation can succeed now?</div>
+            </div>
+
+            <div class="callout red">
+              <strong>The bug is semantic, not syntactic.</strong> Renaming the method, changing HTTP verbs, or wrapping the call in an SDK does not answer what the server guaranteed.
+            </div>
+
+            <h2 id="contract-anatomy">The anatomy of an API contract</h2>
+            <p>
+              A useful schema describes data. A production contract also describes what may happen
+              before, during, and after every observable interaction.
+            </p>
+
+            <div class="diagram-box">
+              <div class="formula">
+                <div class="formula-term tone-blue">Schema<small style="display:block;font-weight:500">valid shapes</small></div>
+                <div class="formula-symbol">+</div>
+                <div class="formula-term tone-violet">State transitions<small style="display:block;font-weight:500">what changes</small></div>
+                <div class="formula-symbol">+</div>
+                <div class="formula-term tone-amber">Failure semantics<small style="display:block;font-weight:500">what is uncertain</small></div>
+                <div class="formula-symbol">+</div>
+                <div class="formula-term tone-cyan">Consistency<small style="display:block;font-weight:500">when reads agree</small></div>
+                <div class="formula-symbol">+</div>
+                <div class="formula-term tone-green">Lifecycle<small style="display:block;font-weight:500">who owns work</small></div>
+                <div class="formula-symbol">+</div>
+                <div class="formula-term tone-slate">Compatibility<small style="display:block;font-weight:500">how it evolves</small></div>
+              </div>
+              <div class="diagram-caption">The schema is necessary. The other five terms determine whether the API remains trustworthy in production.</div>
+            </div>
+
+            <div class="grid-3">
+              <div class="concept-card">
+                <div class="eyebrow">State</div>
+                <strong>What became true?</strong>
+                <p>Was intent recorded, capacity allocated, or readiness achieved?</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Time</div>
+                <strong>When is it observable?</strong>
+                <p>Does the next read reflect the write? Can status legitimately lag?</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Failure</div>
+                <strong>What remains uncertain?</strong>
+                <p>Did the work happen even though the response was lost?</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Ownership</div>
+                <strong>Who owns the work?</strong>
+                <p>Does work survive disconnect, timeout, or client process death?</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Identity</div>
+                <strong>What is the same thing?</strong>
+                <p>Resource, logical action, transport attempt, and result need distinct identities.</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Evolution</div>
+                <strong>What may safely change?</strong>
+                <p>Consumers will persist values and assumptions the service can no longer coordinate.</p>
+              </div>
+            </div>
+
+            <h2 id="planes">Control plane and data plane</h2>
+            <p>
+              Inference platforms expose two kinds of work with different latency, durability, and
+              ownership expectations. Mixing them into one mental model creates bad defaults.
+            </p>
+
+            <div class="callout">
+              <strong>Scope of this tutorial:</strong> Deployment is the running example and carries most of the narrative. Generation appears only when caller-owned, latency-sensitive, or partially observed work changes the correct API design.
+            </div>
+
+            <div class="diagram-box">
+              <div class="plane-map">
+                <div class="plane control">
+                  <div class="eyebrow">Durable intent</div>
+                  <h3>Control plane</h3>
+                  <p>Creates and reconciles resources. Seconds or minutes may be normal; disconnect does not erase intent.</p>
+                  <div class="plane-items">
+                    <div class="plane-item">ModelRevision</div>
+                    <div class="plane-item">Deployment</div>
+                    <div class="plane-item">Operation</div>
+                    <div class="plane-item">Deployment status</div>
+                  </div>
+                </div>
+                <div class="plane-bridge">⇄</div>
+                <div class="plane data">
+                  <div class="eyebrow" style="color:var(--cyan)">Latency-sensitive work</div>
+                  <h3>Data plane</h3>
+                  <p>Consumes serving capacity. Milliseconds matter; work is usually owned by the calling interaction.</p>
+                  <div class="plane-items">
+                    <div class="plane-item">Generate</div>
+                    <div class="plane-item">Stream events</div>
+                    <div class="plane-item">Generation identity</div>
+                    <div class="plane-item">Terminal result</div>
+                  </div>
+                </div>
+              </div>
+              <div class="diagram-caption">The planes cooperate, but their contracts should not inherit each other’s latency or ownership semantics by accident.</div>
+            </div>
+
+            <table>
+              <thead>
+                <tr><th>Concern</th><th>Control plane</th><th>Data plane</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Typical work</td><td>Create or update desired state</td><td>Produce inference output</td></tr>
+                <tr><td>Lifetime</td><td>Often outlives the initiating request</td><td>Often bounded by the caller or stream</td></tr>
+                <tr><td>Success</td><td>Intent accepted is different from ready</td><td>Result completed is different from partial output</td></tr>
+                <tr><td>Identity</td><td>Durable resource and operation names</td><td>Request or generation identity when observation requires it</td></tr>
+              </tbody>
+            </table>
+
+            <h2 id="resource-model">Resource, operation, or request?</h2>
+            <p>
+              The public abstraction should match the consumer’s mental model and the work’s lifetime,
+              not the backend service that happens to execute it today.
+            </p>
+
+            <div class="diagram-box">
+              <div class="resource-map">
+                <div class="resource-stack">
+                  <div class="resource-node"><strong>Model revision</strong><small>Immutable identity used for reproducibility</small></div>
+                  <div class="resource-node primary"><strong>Deployment</strong><small>Durable desired serving configuration</small></div>
+                  <div class="resource-node"><strong>Operation</strong><small>Durable observation of control-plane work</small></div>
+                </div>
+                <div class="resource-arrow">→</div>
+                <div class="resource-stack">
+                  <div class="resource-node transient"><strong>Generation request</strong><small>Ephemeral caller-owned inference work</small></div>
+                  <div class="resource-node"><strong>Generation identity</strong><small>Added when replay, accounting, or observation requires it</small></div>
+                  <div class="resource-node"><strong>Stream and terminal result</strong><small>Partial observations plus one explicit outcome</small></div>
+                </div>
+              </div>
+              <div class="diagram-caption">Identity follows the abstraction’s lifetime. It should not expose scheduler job IDs or machine placement.</div>
+            </div>
+
+            <div class="grid-3">
+              <div class="concept-card">
+                <div class="eyebrow">Use a resource when</div>
+                <strong>The user expects durable state.</strong>
+                <p>It can be named, retrieved, updated, observed, and eventually deleted.</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Use an operation when</div>
+                <strong>Work outlives one request.</strong>
+                <p>The consumer needs durable progress, terminal result, error, or cancellation.</p>
+              </div>
+              <div class="concept-card">
+                <div class="eyebrow">Use a request when</div>
+                <strong>The interaction owns the work.</strong>
+                <p>The result is immediate or streamed and persistence is not part of the promise.</p>
+              </div>
+            </div>
+
+            <h2 id="intent">Design from consumer intent</h2>
+            <p>
+              The consumer wants a model served with a capacity policy. It does not want to become
+              a client of the scheduler, capacity allocator, model loader, and health checker.
+            </p>
+
+            <div class="comparison">
+              <div class="comparison-panel bad">
+                <div class="eyebrow" style="color:var(--red)">Backend mechanics leak</div>
+                <strong>Imperative orchestration API</strong>
+                <ul>
+                  <li>reserve_gpu_pool()</li>
+                  <li>submit_scheduler_job()</li>
+                  <li>load_model_on_workers()</li>
+                  <li>register_serving_route()</li>
+                </ul>
+              </div>
+              <div class="comparison-arrow">→</div>
+              <div class="comparison-panel good">
+                <div class="eyebrow" style="color:var(--green)">Consumer intent survives</div>
+                <strong>Declarative deployment resource</strong>
+                <ul>
+                  <li>model revision or resolvable alias</li>
+                  <li>fixed or autoscaling capacity policy</li>
+                  <li>durable resource identity</li>
+                  <li>observable readiness status</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="callout green">
+              <strong>Hide complexity, not semantics.</strong> Consumers should not know which scheduler or GPU host is involved. They must know whether desired state was accepted and whether serving capacity is ready.
+            </div>
+
+            <h2 id="rest-contract">A first explicit REST contract</h2>
+            <p>
+              Chapter 1 establishes the resource boundary. Later chapters will strengthen retry,
+              concurrency, long-running-operation, and streaming behavior without changing what a
+              Deployment means.
+            </p>
+
+            <div class="code-pair">
+              <div class="code-shell">
+                <div class="code-toolbar">
+                  <span>REST / JSON · canonical</span>
+                  <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>POST /v1/deployments HTTP/1.1
+Content-Type: application/json
+
+{
+  <span class="string">"model"</span>: <span class="string">"llama-3.1-70b"</span>,
+  <span class="string">"capacity"</span>: {
+    <span class="string">"fixed_replicas"</span>: <span class="number">4</span>
+  }
+}</code></pre>
+              </div>
+              <div class="code-shell">
+                <div class="code-toolbar">
+                  <span>Python · faithful projection</span>
+                  <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>deployment = client.create_deployment(
+    model=<span class="string">"llama-3.1-70b"</span>,
+    capacity={
+        <span class="string">"fixed_replicas"</span>: <span class="number">4</span>,
+    },
+)
+
+<span class="keyword">print</span>(deployment.name)
+<span class="comment"># deployments/dep-123</span></code></pre>
+              </div>
+            </div>
+
+            <div class="code-shell">
+              <div class="code-toolbar">
+                <span>REST / JSON · first response contract</span>
+                <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><code>HTTP/1.1 201 Created
+Location: /v1/deployments/dep-123
+
+{
+  <span class="string">"name"</span>: <span class="string">"deployments/dep-123"</span>,
+  <span class="string">"model"</span>: <span class="string">"models/llama-3.1-70b@2026-08-01"</span>,
+  <span class="string">"capacity"</span>: {<span class="string">"fixed_replicas"</span>: <span class="number">4</span>},
+  <span class="string">"status"</span>: {
+    <span class="string">"phase"</span>: <span class="string">"PENDING"</span>,
+    <span class="string">"ready_replicas"</span>: <span class="number">0</span>
+  }
+}</code></pre>
+            </div>
+
+            <div class="callout amber">
+              <strong>This contract is intentionally incomplete.</strong> We have defined what the resource means, but not yet safe retries, lost responses, concurrent updates, or durable operation tracking. Those ambiguities drive Chapters 2–4.
+            </div>
+
+            <h2 id="server-obligation">The server obligation</h2>
+            <p>
+              A clean response shape is not enough. The implementation must make the public guarantee
+              true at the service boundary.
+            </p>
+
+            <div class="code-shell">
+              <div class="code-toolbar">
+                <span>Server pseudocode · conceptual</span>
+                <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+              </div>
+              <pre><code><span class="keyword">def</span> create_deployment(request, principal):
+    reject_output_only_fields(request, [<span class="string">"name"</span>, <span class="string">"status"</span>])
+    validate_exactly_one_capacity_policy(request.capacity)
+
+    model_revision = resolve_model_alias(request.model)
+    deployment_name = allocate_resource_name(principal.tenant)
+
+    deployment = Deployment(
+        name=deployment_name,
+        model=model_revision.name,      <span class="comment"># immutable revision</span>
+        capacity=request.capacity,      <span class="comment"># desired state</span>
+        status=Status(phase=<span class="string">"PENDING"</span>), <span class="comment"># output-only</span>
+    )
+
+    <span class="keyword">with</span> durable_store.transaction():
+        durable_store.insert(deployment)
+        durable_store.append_reconcile_intent(deployment.name)
+    <span class="keyword">return</span> created(deployment)</code></pre>
+            </div>
+
+            <p>
+              The scheduler may be replaced later. The consumer contract remains stable because the
+              server exposes a Deployment and its status—not the queue, worker, or cluster that implements it.
+            </p>
+
+            <h2 id="contract-tests">Test the boundary, not the implementation</h2>
+            <p>
+              Contract tests should assert externally observable guarantees. They should not freeze
+              scheduler calls, database tables, or other implementation details.
+            </p>
+
+            <div class="code-pair">
+              <div class="code-shell">
+                <div class="code-toolbar">
+                  <span>pytest-style contract tests</span>
+                  <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code><span class="keyword">def</span> test_status_is_output_only(api):
+    response = api.post(<span class="string">"/v1/deployments"</span>, json={
+        <span class="string">"model"</span>: <span class="string">"llama-3.1-70b"</span>,
+        <span class="string">"capacity"</span>: {<span class="string">"fixed_replicas"</span>: <span class="number">4</span>},
+        <span class="string">"status"</span>: {<span class="string">"phase"</span>: <span class="string">"READY"</span>},
+    })
+
+    <span class="keyword">assert</span> response.status_code == <span class="number">400</span></code></pre>
+              </div>
+              <div class="code-shell">
+                <div class="code-toolbar">
+                  <span>pytest-style contract tests</span>
+                  <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code><span class="keyword">def</span> test_alias_resolves_to_revision(api):
+    deployment = create_deployment(
+        api,
+        model=<span class="string">"llama-3.1-70b"</span>,
+    )
+
+    <span class="keyword">assert</span> deployment[<span class="string">"model"</span>] \
+        == <span class="string">"models/llama-3.1-70b@2026-08-01"</span>
+    <span class="keyword">assert</span> <span class="string">"scheduler_job_id"</span> \
+        <span class="keyword">not in</span> deployment</code></pre>
+              </div>
+            </div>
+
+            <div class="test-list">
+              <div class="test-item">
+                <div class="test-badge">✓</div>
+                <div><strong>Ownership test</strong><p>The client cannot set server-owned status or resource identity.</p></div>
+              </div>
+              <div class="test-item">
+                <div class="test-badge">✓</div>
+                <div><strong>Reproducibility test</strong><p>A friendly alias is resolved and the immutable model revision is returned.</p></div>
+              </div>
+              <div class="test-item">
+                <div class="test-badge">✓</div>
+                <div><strong>Abstraction test</strong><p>The public resource does not leak scheduler, cluster, host, or GPU-pool identifiers.</p></div>
+              </div>
+            </div>
+
+            <h2 id="guarantee">State the guarantee explicitly</h2>
+            <div class="contract-box">
+              <div class="contract-label">Chapter 1 guarantee</div>
+              <p>
+                A successful CreateDeployment response means a named Deployment resource now exists
+                with durable desired configuration and a resolved model revision. It does not mean
+                serving replicas are ready; readiness is reported separately through output-only status.
+              </p>
+            </div>
+
+            <h3>Design checklist</h3>
+            <div class="checklist">
+              <div class="check-item">What durable state exists when the call returns?</div>
+              <div class="check-item">Which fields express consumer intent?</div>
+              <div class="check-item">Which fields are output-only observations?</div>
+              <div class="check-item">What is a resource, operation, or transient request?</div>
+              <div class="check-item">Which internal identifiers must stay hidden?</div>
+              <div class="check-item">Does “success” imply existence, progress, or readiness?</div>
+            </div>
+
+            <h2 id="ledger">Contract ledger after Chapter 1</h2>
+            <p>
+              This ledger is cumulative. Every later chapter may strengthen the contract, but it must
+              not silently contradict decisions already visible to consumers.
+            </p>
+
+            <table>
+              <thead>
+                <tr><th>Concept</th><th>Decision established</th><th>Still unresolved</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Deployment</code></td><td>Durable desired serving configuration</td><td>Safe retry and concurrent update behavior</td></tr>
+                <tr><td><code>model</code></td><td>Response records an immutable resolved revision</td><td>How aliases and defaults evolve</td></tr>
+                <tr><td><code>status</code></td><td>Output-only observation; readiness is separate from existence</td><td>Consistency and reconciliation details</td></tr>
+                <tr><td><code>Operation</code></td><td>Reserved for durable control-plane work</td><td>State machine, waiting, and cancellation</td></tr>
+                <tr><td><code>Generation</code></td><td>Data-plane work, normally owned by the caller</td><td>Identity, streaming, replay, and partial failure</td></tr>
+                <tr><td>Implementation</td><td>Scheduler and placement details remain hidden</td><td>No public dependency on current topology</td></tr>
+              </tbody>
+            </table>
+
+            <div class="callout">
+              <strong>Next semantic failure:</strong> the server creates the Deployment, but the success response is lost. Chapter 2 asks whether the client can retry without creating a duplicate.
+            </div>
+          </div>
+
+          <div class="chapter-footer">
+            <button type="button" onclick="collapseAndFocus('chapter-1')">⌃ Collapse chapter</button>
+            <span class="next-chapter">Next planned: errors, deadlines, retries, and idempotency →</span>
+          </div>
+        </section>
+
+        <p class="footer-note">
+          Chapter 1 prototype · Production-grade here means the core semantic contract, not an exhaustive treatment of auth, billing, tenancy, or deployment operations.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function toggleChapter(id, button) {
+      const chapter = document.getElementById(id);
+      if (!chapter) return;
+      const collapsed = chapter.classList.toggle('collapsed');
+      if (button) button.setAttribute('aria-expanded', String(!collapsed));
+      updateActiveNav();
+    }
+
+    function collapseAndFocus(id) {
+      const chapter = document.getElementById(id);
+      if (!chapter) return;
+      chapter.classList.add('collapsed');
+      const button = chapter.querySelector('.chapter-header');
+      if (button) {
+        button.setAttribute('aria-expanded', 'false');
+        button.focus({ preventScroll: true });
+      }
+      chapter.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      updateActiveNav();
+    }
+
+    function copyCode(button) {
+      const shell = button.closest('.code-shell');
+      const code = shell ? shell.querySelector('code') : null;
+      if (!code) return;
+      const text = code.innerText;
+      const showCopied = () => {
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        window.setTimeout(() => { button.textContent = original; }, 1200);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(showCopied);
+        return;
+      }
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      if (document.execCommand('copy')) showCopied();
+      textarea.remove();
+    }
+
+    const navLinks = Array.from(document.querySelectorAll('.sidebar a[href^="#"]'))
+      .map(link => ({
+        link,
+        target: document.getElementById(link.getAttribute('href').slice(1))
+      }))
+      .filter(entry => entry.target);
+
+    navLinks.forEach(entry => {
+      entry.link.addEventListener('click', event => {
+        event.preventDefault();
+        const chapter = document.getElementById('chapter-1');
+        if (chapter) {
+          chapter.classList.remove('collapsed');
+          const button = chapter.querySelector('.chapter-header');
+          if (button) button.setAttribute('aria-expanded', 'true');
+        }
+        entry.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', '#' + entry.target.id);
+      });
+    });
+
+    function updateActiveNav() {
+      let active = null;
+      for (const entry of navLinks) {
+        if (entry.target.getClientRects().length === 0) continue;
+        if (entry.target.getBoundingClientRect().top <= 160) active = entry;
+      }
+      if (!active && navLinks.length) active = navLinks[0];
+      navLinks.forEach(entry => entry.link.classList.toggle('active', entry === active));
+    }
+
+    window.addEventListener('scroll', updateActiveNav, { passive: true });
+    window.addEventListener('resize', updateActiveNav);
+    window.addEventListener('beforeprint', () => {
+      const chapter = document.getElementById('chapter-1');
+      if (chapter) chapter.classList.remove('collapsed');
+    });
+
+    if (window.location.hash) {
+      const initial = document.getElementById(window.location.hash.slice(1));
+      if (initial) initial.scrollIntoView({ block: 'start' });
+    }
+    updateActiveNav();
+  </script>
+</body>
+</html>
