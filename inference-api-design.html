@@ -253,6 +253,16 @@
       font-size: .74rem;
     }
 
+    .sidebar-divider {
+      color: #929bad;
+      font-size: .62rem;
+      font-weight: 850;
+      letter-spacing: .1em;
+      margin: 13px 0 5px !important;
+      padding: 0 7px;
+      text-transform: uppercase;
+    }
+
     .sidebar-note {
       border-top: 1px solid var(--line);
       color: var(--muted);
@@ -383,6 +393,51 @@
     .chapter.collapsed .chapter-body,
     .chapter.collapsed .chapter-footer {
       display: none;
+    }
+
+    .placeholder-chapter {
+      border-style: dashed;
+      box-shadow: 0 2px 14px rgba(23, 32, 51, .035);
+      scroll-margin-top: 18px;
+    }
+
+    .placeholder-chapter .chapter-header {
+      cursor: default;
+      padding-top: 17px;
+      padding-bottom: 17px;
+    }
+
+    .placeholder-chapter .chapter-header:hover {
+      background: var(--paper);
+    }
+
+    .placeholder-chapter .chapter-num {
+      background: #e8edf5;
+      box-shadow: none;
+      color: #617087;
+    }
+
+    .placeholder-chapter .chapter-title {
+      display: block;
+      color: #3a455a;
+    }
+
+    .placeholder-chapter .chapter-label {
+      display: block;
+      margin-top: 4px;
+    }
+
+    .placeholder-badge {
+      border: 1px solid #d7deea;
+      border-radius: 999px;
+      background: #f5f7fa;
+      color: #778397;
+      flex: 0 0 auto;
+      font-size: .64rem;
+      font-weight: 820;
+      letter-spacing: .08em;
+      padding: 5px 9px;
+      text-transform: uppercase;
     }
 
     .chapter-body {
@@ -742,55 +797,66 @@
       font-weight: 850;
     }
 
-    .resource-map {
+    .relation-map {
       display: grid;
-      grid-template-columns: 1fr 60px 1fr;
+      grid-template-columns: 1fr 72px 1fr 72px 1fr;
       min-width: 720px;
       align-items: center;
       gap: 10px;
       padding: 5px 0;
     }
 
-    .resource-stack {
-      display: grid;
-      gap: 9px;
-    }
-
-    .resource-node {
+    .relation-node {
       border: 1px solid var(--line-strong);
       border-radius: 10px;
       background: #fff;
-      padding: 12px;
+      min-height: 112px;
+      padding: 15px;
       text-align: left;
     }
 
-    .resource-node strong {
+    .relation-node strong {
       display: block;
-      font-size: .85rem;
+      font-size: .9rem;
+      margin: 4px 0 5px;
     }
 
-    .resource-node small {
+    .relation-node p {
       color: var(--muted);
-      display: block;
-      font-size: .72rem;
-      margin-top: 2px;
+      font-size: .77rem;
+      line-height: 1.46;
     }
 
-    .resource-node.primary {
+    .relation-node.resource {
       border-color: #9fb3ed;
       background: var(--blue-soft);
     }
 
-    .resource-node.transient {
+    .relation-node.request {
       border-color: #9ed4df;
       background: var(--cyan-soft);
     }
 
-    .resource-arrow {
+    .relation-node.operation {
+      border-color: #cbbceb;
+      background: var(--violet-soft);
+    }
+
+    .relation-arrow {
       color: #7f8ca0;
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       font-weight: 850;
       text-align: center;
+    }
+
+    .relation-arrow small {
+      display: block;
+      color: var(--muted);
+      font-size: .6rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      margin-bottom: 1px;
+      text-transform: uppercase;
     }
 
     .code-pair {
@@ -876,6 +942,9 @@
       background: #fbfffc;
     }
 
+    .comparison-panel.bad .eyebrow { color: var(--red); }
+    .comparison-panel.good .eyebrow { color: var(--green); }
+
     .comparison-panel strong {
       display: block;
       font-size: .88rem;
@@ -897,6 +966,10 @@
       color: #8090a4;
       font-size: 1.3rem;
       font-weight: 850;
+    }
+
+    .code-pair.test-comparison {
+      align-items: start;
     }
 
     .contract-box {
@@ -966,46 +1039,13 @@
       color: #3e495f;
     }
 
-    .test-list {
-      display: grid;
-      gap: 9px;
-      margin: 15px 0;
+    .table-scroll {
+      overflow-x: auto;
+      margin: 16px 0;
     }
 
-    .test-item {
-      display: grid;
-      grid-template-columns: 29px 1fr;
-      align-items: start;
-      gap: 10px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
-      background: #fbfcfe;
-      padding: 11px 12px;
-    }
-
-    .test-badge {
-      display: flex;
-      width: 25px;
-      height: 25px;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: var(--green-soft);
-      color: var(--green);
-      font-size: .75rem;
-      font-weight: 900;
-    }
-
-    .test-item strong {
-      display: block;
-      font-size: .84rem;
-      margin-bottom: 2px;
-    }
-
-    .test-item p {
-      color: var(--muted);
-      font-size: .78rem;
-      line-height: 1.45;
+    .table-scroll table {
+      margin: 0;
     }
 
     .checklist {
@@ -1111,15 +1151,27 @@
       .checklist { grid-template-columns: 1fr; }
       .comparison { grid-template-columns: 1fr; }
       .comparison-arrow { transform: rotate(90deg); }
+      .table-scroll table { min-width: 660px; }
       .plane-map,
-      .resource-map {
+      .relation-map {
         grid-template-columns: 1fr;
         min-width: 0;
       }
-      .plane-bridge,
-      .resource-arrow {
+      .plane-bridge {
         min-height: 26px;
         transform: rotate(90deg);
+      }
+      .relation-arrow {
+        min-height: 44px;
+        font-size: 0;
+        transform: none;
+      }
+      .relation-arrow::after {
+        content: "↓";
+        display: block;
+        font-size: 1.3rem;
+        line-height: 1;
+        margin-top: 2px;
       }
       .chapter-body { padding: 21px 17px 25px; }
       .chapter-header { padding: 17px; }
@@ -1168,7 +1220,7 @@
 
   <div class="page-shell">
     <header class="hero">
-      <div class="hero-kicker">Modern distributed systems · Chapter 1 prototype</div>
+      <div class="hero-kicker">Modern distributed systems · Tutorial prototype</div>
       <h1>Designing a Production-Grade Inference API</h1>
       <p class="hero-summary">
         A practical tutorial on turning retries, shared state, long-running work, streaming,
@@ -1190,24 +1242,30 @@
         <div class="progress-track" aria-label="Tutorial progress: 1 of 6 chapters">
           <div class="progress-bar"></div>
         </div>
-        <nav aria-label="Chapter 1 contents">
+        <nav aria-label="Tutorial contents">
           <ol>
             <li><a class="active" href="#chapter-1">1. API design is semantics</a></li>
             <li><a class="section-link" href="#incident">The production incident</a></li>
             <li><a class="section-link" href="#contract-anatomy">Anatomy of a contract</a></li>
             <li><a class="section-link" href="#planes">Control and data planes</a></li>
-            <li><a class="section-link" href="#resource-model">Resource, operation, request</a></li>
+            <li><a class="section-link" href="#resource-model">State, work, and transport</a></li>
             <li><a class="section-link" href="#intent">Design from intent</a></li>
             <li><a class="section-link" href="#rest-contract">REST and Python contract</a></li>
             <li><a class="section-link" href="#server-obligation">Server obligation</a></li>
             <li><a class="section-link" href="#contract-tests">Contract tests</a></li>
             <li><a class="section-link" href="#guarantee">Guarantee and checklist</a></li>
             <li><a class="section-link" href="#ledger">Contract ledger</a></li>
+            <li class="sidebar-divider">Coming next</li>
+            <li><a href="#chapter-2">2. Errors and idempotency</a></li>
+            <li><a href="#chapter-3">3. Concurrency and consistency</a></li>
+            <li><a href="#chapter-4">4. Long-running work</a></li>
+            <li><a href="#chapter-5">5. Streaming and replay</a></li>
+            <li><a href="#chapter-6">6. API evolution</a></li>
           </ol>
         </nav>
         <p class="sidebar-note">
-          This iteration intentionally contains only Chapter 1. The visual and teaching patterns
-          will be reused after the chapter is reviewed.
+          Chapter 1 is complete. Chapters 2–6 are visible as placeholders so the full narrative arc
+          stays clear while each chapter is developed.
         </p>
       </aside>
 
@@ -1416,7 +1474,7 @@ response = client.generate(
                   </div>
                 </div>
               </div>
-              <div class="diagram-caption">The planes cooperate, but their contracts should not inherit each other’s latency or ownership semantics by accident.</div>
+              <div class="diagram-caption">The planes classify the kind of work—not which lifecycle abstraction is allowed. A request, Operation, or resource can exist in either plane.</div>
             </div>
 
             <table>
@@ -1431,44 +1489,56 @@ response = client.generate(
               </tbody>
             </table>
 
-            <h2 id="resource-model">Resource, operation, or request?</h2>
+            <h2 id="resource-model">State, work, and transport</h2>
             <p>
-              The public abstraction should match the consumer’s mental model and the work’s lifetime,
-              not the backend service that happens to execute it today.
+              Resource, Operation, and request are related, but they are not mutually exclusive peers.
+              A request is one transport attempt. An Operation is a specialized resource representing
+              durable work. A Deployment is the durable domain state that work is trying to create or change.
             </p>
 
             <div class="diagram-box">
-              <div class="resource-map">
-                <div class="resource-stack">
-                  <div class="resource-node"><strong>Model revision</strong><small>Immutable identity used for reproducibility</small></div>
-                  <div class="resource-node primary"><strong>Deployment</strong><small>Durable desired serving configuration</small></div>
-                  <div class="resource-node"><strong>Operation</strong><small>Durable observation of control-plane work</small></div>
+              <div class="eyebrow" style="margin-bottom:10px">Example · control-plane deployment creation</div>
+              <div class="relation-map">
+                <div class="relation-node request">
+                  <div class="eyebrow" style="color:var(--cyan)">Transport attempt</div>
+                  <strong>HTTP request</strong>
+                  <p>One attempt to ask the service to create a Deployment. It can disconnect or time out.</p>
                 </div>
-                <div class="resource-arrow">→</div>
-                <div class="resource-stack">
-                  <div class="resource-node transient"><strong>Generation request</strong><small>Ephemeral caller-owned inference work</small></div>
-                  <div class="resource-node"><strong>Generation identity</strong><small>Added when replay, accounting, or observation requires it</small></div>
-                  <div class="resource-node"><strong>Stream and terminal result</strong><small>Partial observations plus one explicit outcome</small></div>
+                <div class="relation-arrow"><small>starts</small>→</div>
+                <div class="relation-node operation">
+                  <div class="eyebrow" style="color:var(--violet)">Durable work resource</div>
+                  <strong>Operation</strong>
+                  <p>Survives the request and exposes progress, terminal response or error, and cancellation.</p>
+                </div>
+                <div class="relation-arrow"><small>creates or changes</small>→</div>
+                <div class="relation-node resource">
+                  <div class="eyebrow">Domain resource</div>
+                  <strong>Deployment</strong>
+                  <p>Durable desired serving state that remains after the Operation has completed.</p>
                 </div>
               </div>
-              <div class="diagram-caption">Identity follows the abstraction’s lifetime. It should not expose scheduler job IDs or machine placement.</div>
+              <div class="diagram-caption">The request can end while the Operation continues; the Operation can end while the Deployment remains.</div>
+            </div>
+
+            <div class="callout green">
+              <strong>Operation is not control-plane-only—and not every request needs one.</strong> A synchronous generation request can own its work and return or stream the result directly. Durable asynchronous generation could also return an Operation or domain-specific Job. Use the abstraction when work must outlive the request or be polled, waited on, cancelled, or recovered later.
             </div>
 
             <div class="grid-3">
               <div class="concept-card">
-                <div class="eyebrow">Use a resource when</div>
+                <div class="eyebrow">Domain resource</div>
                 <strong>The user expects durable state.</strong>
                 <p>It can be named, retrieved, updated, observed, and eventually deleted.</p>
               </div>
               <div class="concept-card">
-                <div class="eyebrow">Use an operation when</div>
+                <div class="eyebrow">Operation resource</div>
                 <strong>Work outlives one request.</strong>
                 <p>The consumer needs durable progress, terminal result, error, or cancellation.</p>
               </div>
               <div class="concept-card">
-                <div class="eyebrow">Use a request when</div>
-                <strong>The interaction owns the work.</strong>
-                <p>The result is immediate or streamed and persistence is not part of the promise.</p>
+                <div class="eyebrow">Transport request</div>
+                <strong>One attempt crosses the boundary.</strong>
+                <p>Its timeout or disconnect does not automatically define the lifetime of server-side work.</p>
               </div>
             </div>
 
@@ -1605,58 +1675,137 @@ Location: /v1/deployments/dep-123
               server exposes a Deployment and its status—not the queue, worker, or cluster that implements it.
             </p>
 
-            <h2 id="contract-tests">Test the boundary, not the implementation</h2>
+            <h2 id="contract-tests">Contract tests: test what consumers can observe</h2>
             <p>
-              Contract tests should assert externally observable guarantees. They should not freeze
-              scheduler calls, database tables, or other implementation details.
+              A contract test calls the API as a consumer and asserts only behavior the public
+              contract promises. Tests of internal components still matter; they answer different
+              questions and should not stand in for a boundary test.
             </p>
 
-            <div class="code-pair">
+            <div class="callout blue">
+              <strong>Litmus test:</strong> if we replace the database, queue, or scheduler without
+              changing public behavior, should this test still pass? For a contract test, the answer is yes.
+            </div>
+
+            <h3>Same promise, two very different tests</h3>
+            <p>
+              Suppose the promise is: after creation succeeds, the Deployment and its desired
+              configuration are durably observable. Both tests below exercise creation, but only one tests that promise.
+            </p>
+
+            <div class="code-pair test-comparison">
               <div class="code-shell">
                 <div class="code-toolbar">
-                  <span>pytest-style contract tests</span>
+                  <span>Coupled to today’s implementation</span>
                   <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code><span class="keyword">def</span> test_status_is_output_only(api):
-    response = api.post(<span class="string">"/v1/deployments"</span>, json={
-        <span class="string">"model"</span>: <span class="string">"llama-3.1-70b"</span>,
-        <span class="string">"capacity"</span>: {<span class="string">"fixed_replicas"</span>: <span class="number">4</span>},
-        <span class="string">"status"</span>: {<span class="string">"phase"</span>: <span class="string">"READY"</span>},
-    })
+                <pre><code><span class="keyword">def</span> test_create_deployment(service, request, store, queue):
+    service.create_deployment(request)
 
-    <span class="keyword">assert</span> response.status_code == <span class="number">400</span></code></pre>
+    store.insert.assert_called_once()
+    queue.enqueue.assert_called_once()</code></pre>
               </div>
               <div class="code-shell">
                 <div class="code-toolbar">
-                  <span>pytest-style contract tests</span>
+                  <span>Observes the public contract</span>
                   <button class="copy-button" type="button" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code><span class="keyword">def</span> test_alias_resolves_to_revision(api):
-    deployment = create_deployment(
-        api,
-        model=<span class="string">"llama-3.1-70b"</span>,
-    )
+                <pre><code><span class="keyword">def</span> test_create_is_durable(api):
+    created = api.post(<span class="string">"/v1/deployments"</span>, json={
+        <span class="string">"model"</span>: <span class="string">"llama-3.1-70b"</span>,
+        <span class="string">"capacity"</span>: {<span class="string">"fixed_replicas"</span>: <span class="number">4</span>},
+    })
+    <span class="keyword">assert</span> created.status_code == <span class="number">201</span>
 
-    <span class="keyword">assert</span> deployment[<span class="string">"model"</span>] \
-        == <span class="string">"models/llama-3.1-70b@2026-08-01"</span>
-    <span class="keyword">assert</span> <span class="string">"scheduler_job_id"</span> \
-        <span class="keyword">not in</span> deployment</code></pre>
+    api.restart_service()  <span class="comment"># test-fixture action</span>
+    observed = api.get(created.headers[<span class="string">"Location"</span>])
+
+    <span class="keyword">assert</span> observed.status_code == <span class="number">200</span>
+    <span class="keyword">assert</span> observed.json()[<span class="string">"capacity"</span>] == {
+        <span class="string">"fixed_replicas"</span>: <span class="number">4</span>,
+    }</code></pre>
               </div>
             </div>
 
-            <div class="test-list">
-              <div class="test-item">
-                <div class="test-badge">✓</div>
-                <div><strong>Ownership test</strong><p>The client cannot set server-owned status or resource identity.</p></div>
+            <div class="comparison">
+              <div class="comparison-panel bad">
+                <span class="eyebrow bad">Implementation assertion</span>
+                <strong>It proves which collaborators were called.</strong>
+                <ul>
+                  <li>A storage or queue refactor breaks the test.</li>
+                  <li>The test can pass while the HTTP response is wrong.</li>
+                </ul>
               </div>
-              <div class="test-item">
-                <div class="test-badge">✓</div>
-                <div><strong>Reproducibility test</strong><p>A friendly alias is resolved and the immutable model revision is returned.</p></div>
+              <div class="comparison-arrow">→</div>
+              <div class="comparison-panel good">
+                <span class="eyebrow good">Contract assertion</span>
+                <strong>It proves what a caller can rely on.</strong>
+                <ul>
+                  <li>The test survives an internal rewrite.</li>
+                  <li>It fails when durable API behavior breaks.</li>
+                </ul>
               </div>
-              <div class="test-item">
-                <div class="test-badge">✓</div>
-                <div><strong>Abstraction test</strong><p>The public resource does not leak scheduler, cluster, host, or GPU-pool identifiers.</p></div>
-              </div>
+            </div>
+
+            <p>
+              Restarting the service is a test-fixture action, not a public API call. The important
+              distinction is that the test observes the result only through the published HTTP contract.
+            </p>
+
+            <div class="callout amber">
+              <strong>Implementation tests are not bad.</strong> They are bad substitutes for contract
+              tests. Use each test at the boundary whose behavior it is meant to protect.
+            </div>
+
+            <div class="table-scroll" role="region" aria-label="Test scope comparison" tabindex="0">
+              <table>
+                <thead>
+                  <tr><th>Test scope</th><th>Question it answers</th><th>Example</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Unit / implementation</strong></td>
+                    <td>Is one component or algorithm correct?</td>
+                    <td>The model resolver maps an alias to the expected revision.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Integration</strong></td>
+                    <td>Do internal components cooperate correctly?</td>
+                    <td>The transaction persists desired state and a reconciliation intent atomically.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>API contract</strong></td>
+                    <td>What can an external consumer depend on?</td>
+                    <td>A successful create remains retrievable after restart with the same desired state.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 id="contract-test-translations">Translate internal assertions into public assertions</h3>
+            <div class="table-scroll" role="region" aria-label="Internal and public assertion comparison" tabindex="0">
+              <table>
+                <thead>
+                  <tr><th>Public promise</th><th>Do not use this as the contract test</th><th>Assert this instead</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Status is output-only.</td>
+                    <td><code>validator.reject_output_only_fields()</code> was called.</td>
+                    <td>A POST containing <code>status</code> receives <code>400</code>.</td>
+                  </tr>
+                  <tr>
+                    <td>A friendly model alias becomes reproducible.</td>
+                    <td><code>resolver.resolve(alias)</code> was called.</td>
+                    <td>The response contains the immutable model revision.</td>
+                  </tr>
+                  <tr>
+                    <td>Scheduler details stay private.</td>
+                    <td>The response mapper’s drop-field helper was called.</td>
+                    <td>The response matches the public schema and exposes no scheduler identifier.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <h2 id="guarantee">State the guarantee explicitly</h2>
@@ -1674,7 +1823,7 @@ Location: /v1/deployments/dep-123
               <div class="check-item">What durable state exists when the call returns?</div>
               <div class="check-item">Which fields express consumer intent?</div>
               <div class="check-item">Which fields are output-only observations?</div>
-              <div class="check-item">What is a resource, operation, or transient request?</div>
+              <div class="check-item">Does the request own the work, or merely start it?</div>
               <div class="check-item">Which internal identifiers must stay hidden?</div>
               <div class="check-item">Does “success” imply existence, progress, or readiness?</div>
             </div>
@@ -1693,7 +1842,8 @@ Location: /v1/deployments/dep-123
                 <tr><td><code>Deployment</code></td><td>Durable desired serving configuration</td><td>Safe retry and concurrent update behavior</td></tr>
                 <tr><td><code>model</code></td><td>Response records an immutable resolved revision</td><td>How aliases and defaults evolve</td></tr>
                 <tr><td><code>status</code></td><td>Output-only observation; readiness is separate from existence</td><td>Consistency and reconciliation details</td></tr>
-                <tr><td><code>Operation</code></td><td>Reserved for durable control-plane work</td><td>State machine, waiting, and cancellation</td></tr>
+                <tr><td>HTTP request</td><td>One transport attempt; not the work itself</td><td>Deadlines, retries, and lost responses</td></tr>
+                <tr><td><code>Operation</code></td><td>Specialized resource for durable asynchronous work in either plane</td><td>State machine, waiting, and cancellation</td></tr>
                 <tr><td><code>Generation</code></td><td>Data-plane work, normally owned by the caller</td><td>Identity, streaming, replay, and partial failure</td></tr>
                 <tr><td>Implementation</td><td>Scheduler and placement details remain hidden</td><td>No public dependency on current topology</td></tr>
               </tbody>
@@ -1706,12 +1856,77 @@ Location: /v1/deployments/dep-123
 
           <div class="chapter-footer">
             <button type="button" onclick="collapseAndFocus('chapter-1')">⌃ Collapse chapter</button>
-            <span class="next-chapter">Next planned: errors, deadlines, retries, and idempotency →</span>
+            <button type="button" onclick="goTo('chapter-2')">Next: errors, deadlines, retries, and idempotency →</button>
+          </div>
+        </section>
+
+        <section class="chapter placeholder-chapter" id="chapter-2" aria-label="Chapter 2 placeholder">
+          <div class="chapter-header">
+            <span class="chapter-header-left">
+              <span class="chapter-num">02</span>
+              <span>
+                <span class="chapter-title">Errors, deadlines, retries, and idempotency</span>
+                <span class="chapter-label">When the network makes success ambiguous</span>
+              </span>
+            </span>
+            <span class="placeholder-badge">Planned</span>
+          </div>
+        </section>
+
+        <section class="chapter placeholder-chapter" id="chapter-3" aria-label="Chapter 3 placeholder">
+          <div class="chapter-header">
+            <span class="chapter-header-left">
+              <span class="chapter-num">03</span>
+              <span>
+                <span class="chapter-title">Updates, concurrency, and consistency</span>
+                <span class="chapter-label">Shared state under competing writers</span>
+              </span>
+            </span>
+            <span class="placeholder-badge">Planned</span>
+          </div>
+        </section>
+
+        <section class="chapter placeholder-chapter" id="chapter-4" aria-label="Chapter 4 placeholder">
+          <div class="chapter-header">
+            <span class="chapter-header-left">
+              <span class="chapter-num">04</span>
+              <span>
+                <span class="chapter-title">Long-running work, Operations, and cancellation</span>
+                <span class="chapter-label">When durable work outlives a request</span>
+              </span>
+            </span>
+            <span class="placeholder-badge">Planned</span>
+          </div>
+        </section>
+
+        <section class="chapter placeholder-chapter" id="chapter-5" aria-label="Chapter 5 placeholder">
+          <div class="chapter-header">
+            <span class="chapter-header-left">
+              <span class="chapter-num">05</span>
+              <span>
+                <span class="chapter-title">Streaming, replay, and partial failure</span>
+                <span class="chapter-label">Data-plane focus · output observed before completion</span>
+              </span>
+            </span>
+            <span class="placeholder-badge">Planned</span>
+          </div>
+        </section>
+
+        <section class="chapter placeholder-chapter" id="chapter-6" aria-label="Chapter 6 placeholder">
+          <div class="chapter-header">
+            <span class="chapter-header-left">
+              <span class="chapter-num">06</span>
+              <span>
+                <span class="chapter-title">Designing for evolution</span>
+                <span class="chapter-label">When old clients meet a changing server</span>
+              </span>
+            </span>
+            <span class="placeholder-badge">Planned</span>
           </div>
         </section>
 
         <p class="footer-note">
-          Chapter 1 prototype · Production-grade here means the core semantic contract, not an exhaustive treatment of auth, billing, tenancy, or deployment operations.
+          Chapter 1 complete · Chapters 2–6 planned · Production-grade here means the core semantic contract, not an exhaustive treatment of auth, billing, tenancy, or deployment operations.
         </p>
       </main>
     </div>
@@ -1737,6 +1952,13 @@ Location: /v1/deployments/dep-123
       }
       chapter.scrollIntoView({ behavior: 'smooth', block: 'start' });
       updateActiveNav();
+    }
+
+    function goTo(id) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + id);
     }
 
     function copyCode(button) {
@@ -1777,7 +1999,7 @@ Location: /v1/deployments/dep-123
       entry.link.addEventListener('click', event => {
         event.preventDefault();
         const chapter = document.getElementById('chapter-1');
-        if (chapter) {
+        if (chapter && chapter.contains(entry.target)) {
           chapter.classList.remove('collapsed');
           const button = chapter.querySelector('.chapter-header');
           if (button) button.setAttribute('aria-expanded', 'true');
